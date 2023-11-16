@@ -6,4 +6,5 @@ idf_component_register(SRC_DIRS src
     src/pages/style.css
     src/pages/custom_style.css
     src/pages/home.html
+    src/pages/wifi.html
     src/pages/scripts.js)

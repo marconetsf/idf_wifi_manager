@@ -1,263 +1,60 @@
 <!DOCTYPE HTML>
-    <style>
-        body
-        {
-            background-color: #ffffff;
-            font-family: "Arial", sans-serif;
-            padding: 50px;
-        }
-
-        .container
-        {
-            margin: 150px auto;
-            padding: 10px;
-            width: 300px;
-            height: 300px;
-            background-color: #d2d2d2;
-            border-radius: 5px;
-        }
-
-        h1
-        {
-            width: 70%;
-            color: #fff;
-            font-size: 32px;
-            margin: 28px auto;
-            margin-bottom: 20px;
-            text-align: center;
-            /*padding-top: 40px;*/
-        }
-
-        .container > form > ::placeholder
-        {
-            color: rgba(255, 255, 255, 0.392);
-        }
-
-        form
-        {
-            /*padding: 15px;*/
-            text-align: center;
-        }
-
-        input
-        {
-            padding: 12px 0;
-            margin-bottom: 10px;
-            border-radius: 3px;
-            border: 2px solid transparent;
-            text-align: center;
-            width: 90%;
-            font-size: 16px;
-            color: #fff;
-            transition: border .2s, background-color .2s;
-        }
-
-        form .field
-        {
-            background-color: #c3c3c3;
-        }
-
-        form .field:focus 
-        {
-            border: 2px solid #3498DB;
-        }
-
-        form .btn
-        {
-            background-color: #1af434;
-            margin-top: 40px;
-            color: #000;
-            font-weight: bold;
-            line-height: 25px;
-            cursor: pointer;
-            box-shadow: 2px 5px 5px rgba(0,0,0,0.5)
-        }
-
-        form .btn:hover,
-        form .btn:active 
-        {
-            background-color: #1F78B4;
-            border: 2px solid #1F78B4;
-        }
-
-        .pass-link
-        {
-            text-align: center;
-        }
-
-        .pass-link a:link,
-        .pass-link a:visited
-        {
-            font-size: 12px;
-            color: #777;
-        }
-    </style>
-
-    <html>
-        <body onload="scan_wifi()">
-        <!-- <body> -->
-            <div class="container" id="list_wifis">
-                <h1>Rede</h1>
-                <div id="wifiListLoading" >
-                    Carregando....                    
-                </div>
-                <div id="wifiList" style="display:none">
-                    
-                </div>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iPonia</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/custom_style.css" />
+    </head>
+    <body onload="get_button_list()">
+        <main class="container">
+            <div class="iponiaLogo"></div>
+          <section id="buttons">
+            <div class="headings">
+              <h2>iPonia</h2>
+              <h3>Menu</h3>
             </div>
-
-            <div class="container" id="form_connect" style="display:none">
-                <h1>Rede</h1>
-                <form> <!-- action="/credentials" method="POST">-->
-                    <input type="text" placeholder="SSID" class="field" name= "ssid" id="ssid" value = "">
-                    <input type="password" placeholder="Senha" class="field" name="password" id="password" value = "">
-                    <input type="text" placeholder="User" class="field" name="user" id="user" value ="">
-                    <input type="hidden" name="auth" id="auth" value="0">
-                    <input type="" onclick="sendNewConfig();" class="btn" value="Conectar">
-                    <input type="" onclick="scan_wifi();" class="btn" value="Voltar">
-                </form>
+            <div class="grid" id = "button_list">
+              <a href="./wifi.html"><button>Wi-fi</button></a>
             </div>
-
-            <script>
-                function scan_wifi()
+          </section>
+        </main>
+        <script>
+            function get_button_list()
                 {
-                    const xhttp = new XMLHttpRequest();
-                    xhttp.open("GET", "./scanned_devices");
-                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                    
-                    xhttp.send(JSON.stringify({
-                    "username": "dawdwa",
-                    "password": "dawdwa"
-                    }));
+                    try {
+                        const xhttp = new XMLHttpRequest();
+                        xhttp.open("GET", "./get_pages");
+                        xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                        
+                        xhttp.send(JSON.stringify({
+                        "username": "dawdwa",
+                        "password": "dawdwa"
+                        }));
 
-                    xhttp.onreadystatechange = function() 
-                    {
-                        if (this.readyState != 4) return;
-                        const objects = JSON.parse(this.responseText); 
-                        console.log(objects);
-                        console.log(objects);
-                        document.querySelector("#wifiListLoading").style.display = 'block';
-                        document.querySelector("#wifiList").style.display = 'none';
-                        document.querySelector("#wifiList").innerHTML = '';
-                        document.querySelector("#form_connect").style.display = 'none';
-                        document.querySelector("#list_wifis").style.display = 'block';
-
-                        if(objects['redes'].length > 0){
-                            objects['redes'].forEach(updateWifiList);
-
-                        }else{
-                            document.querySelector("#wifiList").innerHTML = 'Nehuma rede encontrada';
-                        }
-
-                        document.querySelector("#wifiListLoading").style.display = 'none';
-                        document.querySelector("#wifiList").style.display = 'block';
-                    }
-
-                    /*
-                    const objects = JSON.parse('{"redes":[{"ssid": "FamiliaDT","rssi": -70,"auth": 0},{"ssid": "tamborete","rssi": -82,"auth": 0},{"ssid":"tambuguest", "rssi": -82,"auth": 0}]}');
-                    console.log(objects);
-                    document.querySelector("#wifiListLoading").style.display = 'block';
-                    document.querySelector("#wifiList").style.display = 'none';
-                    document.querySelector("#wifiList").innerHTML = '';
-                    document.querySelector("#form_connect").style.display = 'none';
-                    document.querySelector("#list_wifis").style.display = 'block';
-
-                    if(objects['redes'].length > 0){
-                        objects['redes'].forEach(updateWifiList);
-
-                    }else{
-                        document.querySelector("#wifiList").innerHTML = 'Nehuma rede encontrada';
-                    }
-
-                    document.querySelector("#wifiListLoading").style.display = 'none';
-                    document.querySelector("#wifiList").style.display = 'block';
-                    */
-
-
-                    
-                    
-                }
-
-                function login() 
-                {
-                    const username = document.getElementById("username").value;
-                    const password = document.getElementById("password").value;
-
-                    const xhttp = new XMLHttpRequest();
-                    xhttp.open("POST", "/credentials");
-                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-                    xhttp.send(JSON.stringify({
-                        "username": username,
-                        "password": password
-                    }));
-
-                    xhttp.onreadystatechange = function () 
-                    {
-                        if (this.readyState == 4) 
+                        xhttp.onreadystatechange = function() 
                         {
+                            if (this.readyState != 4) return;
                             const objects = JSON.parse(this.responseText);
-                            console.log(objects.loginStatus);
-                            
-                            if (objects.loginStatus == "SUCCESS")
-                            {
-                                location.href = "/home.html";
-                            }
-                            else
-                            {
-                                alert('invalid credentials');
+
+                            if(objects['pages'].length > 0){
+                                objects['pages'].forEach(updateButtonList);
+                            }else{
+                                document.querySelector("#button_list").innerHTML = '<a href="./wifi.html"><button>Wi-fi</button></a>';
                             }
                         }
-                    };
-
-                    return false;
-                }
-
-                function updateWifiList(item, index, arr)
-                {
-                    document.querySelector("#wifiList").innerHTML = document.querySelector("#wifiList").innerHTML +'<div onclick="selectWifi('+"'"+item['ssid']+"'"+','+"'"+item['auth']+"'"+')">' +item['ssid'] + "</div><br>";
-                }
-
-                function selectWifi(ssid,auth)
-                {
-                    document.querySelector("#ssid").value = ssid;
-                    document.querySelector("#auth").value = auth;
-                    document.querySelector("#ssid").readOnly = true;
-                    document.querySelector("#form_connect").style.display = 'block';
-                    document.querySelector("#list_wifis").style.display = 'none';
-                    document.querySelector("#user").style.display = 'none';
-
-                    if(auth != 0){
-                        document.querySelector("#user").style.display = 'block';
-                    }                    
-                }
-
-                function sendNewConfig()
-                {
-                    const xhttp = new XMLHttpRequest();
-                    xhttp.open("POST", "./setconfig");
-                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-                    context = "netw-config";
-                    json_to_send = JSON.stringify({
-                        "context": context,
-                        "ssid": document.querySelector("#ssid").value,
-                        "password": document.querySelector("#password").value,
-                        "auth": document.querySelector("#auth").value,
-                        "user": document.querySelector("#user").value
-                        })
-
-                    console.log(json_to_send);
-                    xhttp.send(json_to_send);
-                    xhttp.onreadystatechange = function() 
-                    {
-                        if (this.readyState == 4) 
-                        {
-                            console.log("data sent succesfuly");
-                        }
+                    } catch (error) {
+                        document.querySelector("#button_list").innerHTML = '<a href="./wifi.html"><button>Wi-fi</button></a>';
                     }
+                    
+                    
                 }
-            </script>
 
-        </body>
+                function updateButtonList(item, index, arr)
+                {
+                    document.querySelector("#button_list").innerHTML = document.querySelector("#button_list").innerHTML +'<div><a href="'+item['url']+'"><button>'+item['name']+'</button></a></div>';
+                }
+        </script>
+      </body>
     </html>

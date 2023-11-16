@@ -73,13 +73,32 @@ esp_err_t home_handler(httpd_req_t *req)
         return ESP_OK;
     }
 
-    NETIF_StopTryConnect(); // Um procedimento de scan vai ser feito assim que essa página iniciar, é interessante parar as tentativas de reconexão nesse momento
+    //NETIF_StopTryConnect(); // Um procedimento de scan vai ser feito assim que essa página iniciar, é interessante parar as tentativas de reconexão nesse momento
 
     extern const unsigned char homehtml_start[] asm("_binary_home_html_start");
     extern const unsigned char homehtml_end[] asm("_binary_home_html_end");
     const size_t homehtml_size = (homehtml_end - homehtml_start);
 
     httpd_resp_send_chunk(req, (const char*)homehtml_start, homehtml_size);
+    httpd_resp_send_chunk(req, NULL, 0);
+    return ESP_OK;
+}
+
+esp_err_t wifi_handler(httpd_req_t *req)
+{
+    if (!flag_isLogged)
+    {
+        redirect(req, "/login.html");
+        return ESP_OK;
+    }
+
+    NETIF_StopTryConnect(); // Um procedimento de scan vai ser feito assim que essa página iniciar, é interessante parar as tentativas de reconexão nesse momento
+
+    extern const unsigned char wifi_start[] asm("_binary_wifi_html_start");
+    extern const unsigned char wifi_end[] asm("_binary_wifi_html_end");
+    const size_t wifi_size = (wifi_end - wifi_start);
+
+    httpd_resp_send_chunk(req, (const char*)wifi_start, wifi_size);
     httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
 }
@@ -197,12 +216,12 @@ esp_err_t credentials_handler(httpd_req_t *req)
 esp_err_t custom_style_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG,"ENTROU NO STYLE_HANDLER");
-    extern const unsigned char stylecss_start[] asm("_binary_custom_style_css_start");
-    extern const unsigned char stylecss_end[] asm("_binary_custom_style_css_end");
-    const size_t stylecss_size = (stylecss_end - stylecss_start);
+    extern const unsigned char custom_stylecss_start[] asm("_binary_custom_style_css_start");
+    extern const unsigned char custom_stylecss_end[] asm("_binary_custom_style_css_end");
+    const size_t custom_stylecss_size = (custom_stylecss_end - custom_stylecss_start);
 
     httpd_resp_set_type(req, "text/css");
-    httpd_resp_send_chunk(req, (const char*)stylecss_start, stylecss_size);
+    httpd_resp_send_chunk(req, (const char*)custom_stylecss_start, custom_stylecss_size);
     httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
 }
@@ -340,6 +359,13 @@ httpd_uri_t urls[] = {
         .uri      = "/home.html",
         .method   = HTTP_GET,
         .handler  = home_handler,
+        .user_ctx = NULL,
+    },
+    {
+        // tela de home lista todas as páginas de navegação que podem ser acessadas
+        .uri      = "/wifi.html",
+        .method   = HTTP_GET,
+        .handler  = wifi_handler,
         .user_ctx = NULL,
     },
     {

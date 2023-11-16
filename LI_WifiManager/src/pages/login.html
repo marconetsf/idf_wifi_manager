@@ -1,108 +1,27 @@
 <!DOCTYPE HTML>
-<style>
-    body
-    {
-        background-color: #ffffff;
-        font-family: "Arial", sans-serif;
-        padding: 50px;
-    }
-
-    .container
-    {
-        margin: 150px auto;
-        padding: 10px;
-        width: 300px;
-        height: 300px;
-        background-color: #d2d2d2;
-        border-radius: 5px;
-    }
-
-    h1
-    {
-        width: 70%;
-        color: #fff;
-        font-size: 32px;
-        margin: 28px auto;
-        margin-bottom: 20px;
-        text-align: center;
-        /*padding-top: 40px;*/
-    }
-
-    .container > form > ::placeholder
-    {
-        color: rgba(255, 255, 255, 0.392);
-    }
-
-    form
-    {
-        /*padding: 15px;*/
-        text-align: center;
-    }
-
-    input
-    {
-        padding: 12px 0;
-        margin-bottom: 10px;
-        border-radius: 3px;
-        border: 2px solid transparent;
-        text-align: center;
-        width: 90%;
-        font-size: 16px;
-        color: #fff;
-        transition: border .2s, background-color .2s;
-    }
-
-    form .field
-    {
-        background-color: #c3c3c3;
-    }
-
-    form .field:focus 
-    {
-        border: 2px solid #3498DB;
-    }
-
-    form .btn
-    {
-        background-color: #1af434;
-        margin-top: 40px;
-        color: #000;
-        font-weight: bold;
-        line-height: 25px;
-        cursor: pointer;
-        box-shadow: 2px 5px 5px rgba(0,0,0,0.5)
-    }
-
-    form .btn:hover,
-    form .btn:active 
-    {
-        background-color: #1F78B4;
-        border: 2px solid #1F78B4;
-    }
-
-    .pass-link
-    {
-        text-align: center;
-    }
-
-    .pass-link a:link,
-    .pass-link a:visited
-    {
-        font-size: 12px;
-        color: #777;
-    }
-</style>
-
-    <html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>iPonia</title>
+    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href="/custom_style.css" />
+    </head>
         <body>
-            <div class="container">
-                <h1>Login</h1>
-                <form> <!-- action="/credentials" method="POST">-->
-                    <input type="text" placeholder="username" class="field" name= "username" id="username" value = "">
-                    <input type="password" placeholder="password" class="field" name="password" id="password" value = "">
-                    <input type="submit" onclick="login(); return false;" class="btn">
-                </form>
-            </div>
+            <main class="container">
+                <div class="container">
+                    <article>
+                    <div class="iponiaLogo"></div>
+                    <h1>Login</h1>
+                    <form>
+                        <input type="text" placeholder="Usuário" name= "username" id="username" value = "">
+                        <input type="password" placeholder="Senha" name="password" id="password" value = "">
+                        <input type="submit" onclick="login(); return false;" class="btn">
+                    </form>
+                    </article>
+                </div>
+            </main>
+            
 
             <script>
                 function login() 
@@ -132,7 +51,7 @@
                             }
                             else
                             {
-                                alert('invalid credentials');
+                                alert('Credenciais invalidas');
                             }
                         }
                     };

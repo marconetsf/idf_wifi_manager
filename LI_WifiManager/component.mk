@@ -5,5 +5,6 @@ COMPONENT_DEPENDS = log esp_http_server
 COMPONENT_EMBED_TXTFILES := src/pages/login.html
 COMPONENT_EMBED_TXTFILES += src/pages/style.css
 COMPONENT_EMBED_TXTFILES += src/pages/home.html
+COMPONENT_EMBED_TXTFILES += src/pages/wifi.html
 COMPONENT_EMBED_TXTFILES += src/pages/custom_style.css
 COMPONENT_EMBED_TXTFILES += src/pages/scripts.js
