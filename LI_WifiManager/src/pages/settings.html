@@ -1,0 +1,323 @@
+<html>
+    <head>    
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                background-color: #333333;
+            }
+
+            .dynamic-screen {
+                display: flex;
+                flex-wrap: wrap;
+                background-color: #333333;
+                padding: 0px;
+            }
+
+            .dynamic-screen input[type="radio"] {
+                display: none;
+            }
+                
+            .dynamic-screen label {
+                padding: 15px;
+                background: #4d4d4d;
+                font-weight: bold;
+            }
+
+            .dynamic-screen .tab {
+                width: 100%;
+                height: 100%;
+                padding: 20px;
+                background: #727272;
+                order: 1;
+                display: none;
+            }
+
+            .dynamic-screen label:hover {
+                background: #f4d31a;
+            }
+
+            .dynamic-screen input[type='radio']:checked + label + .tab{
+                display: block;
+            }
+
+            .dynamic-screen input[type="radio"]:checked + label{
+                background: #f4d31a;
+            }
+
+            .config-inputs {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: space-around;
+                width: 100%;
+                height: 100%;
+            }
+
+            .config-inputs label{
+                font-weight: bold;
+                padding: 0px;
+            }
+        </style>
+
+        
+  
+    </head>
+
+    <body onload="requestData()">
+        <div class = "dynamic-screen">
+            
+
+            <!-- DEVICE CONFIG BEGIN -->
+            <input type = "radio" id="dev-config" name="dynamic-screen" checked="checked">
+            <label for="dev-config">Device Config</label>
+            <div class = "tab">
+                <h2>Device-Config</h2>
+                <div class = "config-inputs">
+                    <form>
+                        <label>Device id: <input type="text" name="dynamic-screen" value="" id="input-id"></label><br>
+                        <label>Operation Mode:
+                            <select name="select" id="select-mode">
+                                <option value=0 selected>ALL-ENDNODE</option>
+                                <option value=1>ALL-GATEWAY</option>
+                            </select>
+                        </label>
+                        <br>
+                        <input type="button" value="save" onclick="sendData('dev-config'); return;">
+                    </form>
+                </div>  
+            </div>
+            <!-- DEVICE CONFIG END -->
+
+            <!-- NETWORK CONFIG BEGIN -->
+            <input type = "radio" id="net-config" name="dynamic-screen">
+            <label for="net-config">Network Config</label>
+            <div class = "tab">
+                <h2>Network Config</h2>
+                <div class = "config-inputs">
+                    <form>
+                        <label>STA SSID: <input type="text" name="ssid" value="" id="ssid"></label><br>
+                        <label>STA Password: <input type="password" name="password" value="" id="password"></label><br>
+                        <!--<label>MQTT Host: <input type="text" name="mqtt-host" value="" id="mqtt-host"></label><br>
+                        <label>MQTT Port: <input type="text" name="mqtt-port" value="" id="mqtt-port"></label><br>-->
+                        <input type="button" value="save" onclick="sendData('netw-config'); return;">
+                    </form>
+                </div> 
+            </div>
+            <!-- NETWORK CONFIG END -->
+
+            <!-- INPUTS CONFIG BEGIN -->
+            <input type = "radio" id="input-config" name="dynamic-screen">
+            <label for="input-config">Inputs</label>
+            <div class = "tab">
+                <h2>Input Config</h2>
+                <div class = "config-inputs">
+                    <form>
+                        <input type="checkbox" id="digital" name="digital" value="digital">
+                        <label for="vehicle1"> Digital input</label><br>
+                        <input type="checkbox" id="analog" name="analog" value="analog">
+                        <label for="vehicle2"> Analog input</label><br>
+                        <input type="checkbox" id="modbus-in" name="modbus" value="modbus">
+                        <label for="vehicle3"> Modbus RTU</label>
+                        <input type="button" value="config" onclick="modbus_config();"></button><br>
+                        <input type="button" value="save" onclick="sendData('in-config'); return;">
+                    </form>
+                </div>  
+            </div>
+            <!-- INPUTS CONFIG END -->
+
+            <!-- OUTPUT CONFIG BEGIN -->
+            <input type = "radio" id="output-config" name="dynamic-screen">
+            <label for="output-config">Outputs</label>
+            <div class = "tab">
+                <h2>Output Config</h2>
+                <div class = "config-inputs">
+                    <form>
+                        <input type="checkbox" id="mqtt" name="mqtt" value="mqtt">
+                        <label for="vehicle1"> MQTT</label><br>
+                        <input type="checkbox" id="modbus-out" name="modbus" value="modbus">
+                        <label for="modbus"> Modbus RTU</label><br>
+                        <input type="checkbox" id="lorawan" name="lorawan" value="lorawan">
+                        <label for="lorawan"> LoRaWAN</label><br>
+                        <input type="button" value="save" onclick="sendData('out-config'); return;">
+                    </form>
+                </div>  
+            </div>
+            <!-- INPUTS CONFIG END -->
+
+            <!-- ACTIONS CONFIG BEGIN -->
+            <!--
+            <input type = "radio" id="action-config" name="dynamic-screen">
+            <label for="action-config">Actions</label>
+            <div class = "tab">
+                <h2>Actions Config</h2>
+                <div class = "config-inputs">
+                    <form>
+                        <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike">
+                        <label for="vehicle1"> I have a bike</label><br>
+                        <input type="checkbox" id="vehicle2" name="vehicle2" value="Car">
+                        <label for="vehicle2"> I have a car</label><br>
+                        <input type="checkbox" id="vehicle3" name="vehicle3" value="Boat">
+                        <label for="vehicle3"> I have a boat</label><br><br>
+                    </form>
+                </div>  
+            </div>-->
+            <!-- ACTIONS CONFIG END -->
+        </div>
+
+
+        <script>
+            const Network_outputs = {
+            MODBUS_RTU: 0b01000000,
+            MQTT: 0b00000100,
+            LORAWAN: 0b00000010
+            }
+
+            const Network_inputs = {
+                DIGITAL: 0b00000001,
+                ANALOG: 0b00000010,
+                MODBUS_RTU: 0b00100000
+            }
+
+            function requestData()
+            {
+                alert("Após modificar as configurações o dispositivo será reiniciado!");
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("GET", "./getconfig");
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                xhttp.send(JSON.stringify({
+                    "username": "dawdwa",
+                    "password": "dawdwa"
+                }));
+                xhttp.onreadystatechange = function() 
+                {
+                    if (this.readyState == 4) 
+                    {
+                        const objects = JSON.parse(this.responseText);
+                        console.log(objects);
+                        document.getElementById("input-id").value = objects.id;
+                        document.getElementById("select-mode").value = objects.op_mode; 
+                        document.getElementById("ssid").value = objects.ssid;
+                        document.getElementById("password").value = objects.password;
+
+                        var output_result = objects.output;
+                        var input_result = objects.input;
+
+                        //OUTPUTS TREATMENTS
+                        if(UTILS_hasInside(output_result, Network_outputs.MQTT))
+                            document.getElementById("mqtt").checked = true;
+                        else
+                        document.getElementById("mqtt").checked = false;
+
+                        if(UTILS_hasInside(output_result, Network_outputs.MODBUS_RTU))
+                            document.getElementById("modbus-out").checked = true;
+                        else
+                        document.getElementById("modbus-out").checked = false;
+                        
+                        if(UTILS_hasInside(output_result, Network_outputs.LORAWAN))
+                            document.getElementById("lorawan").checked = true;
+                        else
+                        document.getElementById("lorawan").checked = false;
+
+
+                        //INPUTS TREATMENTS
+                        if(UTILS_hasInside(input_result, Network_inputs.DIGITAL))
+                            document.getElementById("digital").checked = true;
+                        else
+                        document.getElementById("digital").checked = false;
+
+                        if(UTILS_hasInside(input_result, Network_inputs.MODBUS_RTU))
+                            document.getElementById("modbus-in").checked = true;
+                        else
+                        document.getElementById("modbus-in").checked = false;
+                        
+                        if(UTILS_hasInside(input_result, Network_inputs.ANALOG))
+                            document.getElementById("analog").checked = true;
+                        else
+                        document.getElementById("analog").checked = false;
+                        // document.getElementById("mqtt-host").value = objects.mqtt_host;
+                        // document.getElementById("mqtt-port").value = objects.mqtt_port;
+                    }
+                }
+            }
+
+            function sendData(context)
+            {
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("POST", "./setconfig");
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+                var json_to_send;
+
+                switch (context)
+                {
+                    case 'dev-config':
+                        json_to_send = JSON.stringify({
+                        "context": context,
+                        "id": document.getElementById("input-id").value,
+                        "mode": document.getElementById("select-mode").value
+                        })
+                    break;
+                    
+                    case 'netw-config':
+                        json_to_send = JSON.stringify({
+                        "context": context,
+                        "ssid": document.getElementById("ssid").value,
+                        "password": document.getElementById("password").value
+                        })
+                    break;
+
+                    case 'in-config':
+                        var modbus_in = document.getElementById('modbus-in');
+                        var digital_in = document.getElementById('digital');
+                        var analog_in = document.getElementById('analog');
+
+                        json_to_send = JSON.stringify({
+                        "context": context,
+                        "digital_in": digital_in.checked,
+                        "analog_in": analog_in.checked,
+                        "modbus_in": modbus_in.checked
+                        })
+                    break;
+
+                    case 'out-config': 
+                        var modbus_out = document.getElementById("modbus-out");
+                        var mqtt = document.getElementById("mqtt");
+                        var lorawan = document.getElementById("lorawan");
+
+                        json_to_send = JSON.stringify({
+                        "context": context,
+                        "mqtt": mqtt.checked,
+                        "lorawan": lorawan.checked,
+                        "modbus_out": modbus_out.checked
+                        })
+                    break;
+                    
+                    default:
+                        break;
+                }
+
+                console.log(json_to_send);
+                xhttp.send(json_to_send);
+                xhttp.onreadystatechange = function() 
+                {
+                    if (this.readyState == 4) 
+                    {
+                        console.log("data sent succesfuly");
+                    }
+                }
+            }
+
+            function UTILS_hasInside(general, unitary)
+            {
+                return (general & unitary) == unitary;
+            }
+
+        </script>
+
+        <script src="./pagemod.js"></script>
+    </body>
+
+</html>

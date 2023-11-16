@@ -1,0 +1,10 @@
+COMPONENT_ADD_INCLUDEDIRS = src
+COMPONENT_SRCDIRS = src
+COMPONENT_DEPENDS = log esp_http_server
+#COMPONENT_EMBED_FILES := src/style.css src/code.js src/index.html
+COMPONENT_EMBED_TXTFILES := src/pages/login.html
+COMPONENT_EMBED_TXTFILES += src/pages/style.css
+COMPONENT_EMBED_TXTFILES += src/pages/home.html
+COMPONENT_EMBED_TXTFILES += src/pages/settings.html
+COMPONENT_EMBED_TXTFILES += src/pages/overview.html
+COMPONENT_EMBED_TXTFILES += src/pages/scripts.js
