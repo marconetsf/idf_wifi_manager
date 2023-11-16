@@ -332,7 +332,7 @@ esp_err_t pages_handler(httpd_req_t *req)
         redirect(req, "/login.html");
         return ESP_OK;
     }
-    ESP_LOGI(TAG,"ENTROU NO SCAN_DEVICES_HANDLER");
+    ESP_LOGI(TAG,"ENTROU NO PAGES_HANDLER");
 
     printf("PAGES JSON: %s\n", json_pages);
     httpd_resp_sendstr(req, json_pages);
