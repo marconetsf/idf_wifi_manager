@@ -215,7 +215,7 @@ esp_err_t credentials_handler(httpd_req_t *req)
 
 esp_err_t custom_style_handler(httpd_req_t *req)
 {
-    ESP_LOGI(TAG,"ENTROU NO STYLE_HANDLER");
+    ESP_LOGI(TAG,"ENTROU NO CUSTOM STYLE_HANDLER");
     extern const unsigned char custom_stylecss_start[] asm("_binary_custom_style_css_start");
     extern const unsigned char custom_stylecss_end[] asm("_binary_custom_style_css_end");
     const size_t custom_stylecss_size = (custom_stylecss_end - custom_stylecss_start);
