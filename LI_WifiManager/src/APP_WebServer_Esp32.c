@@ -34,6 +34,7 @@
 char default_login[] = "admin";
 char default_password[] = "password";
 bool flag_isLogged = false;
+char json_pages[1024] = {0};
 
 bool post_reception(httpd_req_t *req, char *buf, int size_buf);
 void redirect(httpd_req_t *req, const char *data);
@@ -43,6 +44,8 @@ void redirect(httpd_req_t *req, const char *data);
 
 WB_Server_st web_server;
 const char TAG[] = "WS";
+
+static void WS_Process_list_pages(WS_Menu_list_st *list, int list_len);
 
 esp_err_t index_handler(httpd_req_t *req)
 {
@@ -190,6 +193,20 @@ esp_err_t credentials_handler(httpd_req_t *req)
     free(buf);
     return ESP_OK;
 }
+
+esp_err_t custom_style_handler(httpd_req_t *req)
+{
+    ESP_LOGI(TAG,"ENTROU NO STYLE_HANDLER");
+    extern const unsigned char stylecss_start[] asm("_binary_custom_style_css_start");
+    extern const unsigned char stylecss_end[] asm("_binary_custom_style_css_end");
+    const size_t stylecss_size = (stylecss_end - stylecss_start);
+
+    httpd_resp_set_type(req, "text/css");
+    httpd_resp_send_chunk(req, (const char*)stylecss_start, stylecss_size);
+    httpd_resp_send_chunk(req, NULL, 0);
+    return ESP_OK;
+}
+
 esp_err_t style_handler(httpd_req_t *req)
 {
     ESP_LOGI(TAG,"ENTROU NO STYLE_HANDLER");
@@ -197,41 +214,8 @@ esp_err_t style_handler(httpd_req_t *req)
     extern const unsigned char stylecss_end[] asm("_binary_style_css_end");
     const size_t stylecss_size = (stylecss_end - stylecss_start);
 
+    httpd_resp_set_type(req, "text/css");
     httpd_resp_send_chunk(req, (const char*)stylecss_start, stylecss_size);
-    httpd_resp_send_chunk(req, NULL, 0);
-    return ESP_OK;
-}
-
-esp_err_t settings_handler(httpd_req_t *req)
-{
-    if (!flag_isLogged)
-    {
-        redirect(req, "/login.html");
-        return ESP_OK;
-    }
-
-    extern const unsigned char settingshtml_start[] asm("_binary_settings_html_start");
-    extern const unsigned char settingshtml_end[] asm("_binary_settings_html_end");
-    const size_t settingshtml_size = (settingshtml_end - settingshtml_start);
-
-    httpd_resp_send_chunk(req, (const char*)settingshtml_start, settingshtml_size);
-    httpd_resp_send_chunk(req, NULL, 0);
-    return ESP_OK;
-}
-
-esp_err_t overview_handler(httpd_req_t *req)
-{
-    if (!flag_isLogged)
-    {
-        redirect(req, "/login.html");
-        return ESP_OK;
-    }
-
-    extern const unsigned char overviewhtml_start[] asm("_binary_overview_html_start");
-    extern const unsigned char overviewhtml_end[] asm("_binary_overview_html_end");
-    const size_t overviewhtml_size = (overviewhtml_end - overviewhtml_start);
-
-    httpd_resp_send_chunk(req, (const char*)overviewhtml_start, overviewhtml_size);
     httpd_resp_send_chunk(req, NULL, 0);
     return ESP_OK;
 }
@@ -252,14 +236,6 @@ esp_err_t reset_handler(httpd_req_t *req)
     }
 
     esp_restart();
-    return ESP_OK;
-}
-
-esp_err_t autenticated_handle(httpd_req_t *req)
-{
-    if (flag_isLogged) httpd_resp_sendstr(req, "{\"loginStatus\": \"SUCCESS\"}");
-    else httpd_resp_sendstr(req, "{\"loginStatus\": \"FAIL\"}"); 
-
     return ESP_OK;
 }
 
@@ -339,141 +315,121 @@ esp_err_t pages_handler(httpd_req_t *req)
     }
     ESP_LOGI(TAG,"ENTROU NO SCAN_DEVICES_HANDLER");
 
-    Network_scan_result_st res[10];
-    int number_devices = NETIF_ScanNetwork(res);
-    	
-    char *response_buffer = (char*)malloc(1024*sizeof(char));
-    char *aux_response_buffer = (char*)malloc(100*sizeof(char));
-
-    sprintf(response_buffer, "{\"redes\":[");
-
-    for (int w = 0; w < number_devices; w++)
-    {
-        sprintf(aux_response_buffer,"{\"ssid\":\"%s\",\"rssi\":%d,\"auth\":%d}", res[w].name, res[w].rssi, res[w].auth);
-        strcat(response_buffer, aux_response_buffer);
-        if (w < number_devices-1)
-        {
-            strcat(response_buffer, ",");
-        }
-    }
-    strcat(response_buffer, "]}");
-    printf("Scanned device: %s\n", response_buffer);
-
-    httpd_resp_sendstr(req, response_buffer);
-
-    free(response_buffer);
-    free(aux_response_buffer);
-
-
+    printf("PAGES JSON: %s\n", json_pages);
+    httpd_resp_sendstr(req, json_pages);
     return ESP_OK;
 }
 
 httpd_uri_t urls[] = {
     {
-        .uri      = "/",
+        // Apenas redireciona para o /login.html
+        .uri      = "/", 
         .method   = HTTP_GET,
         .handler  = index_handler,
         .user_ctx = NULL
     },
     {
+        // Tela de login (usuário informa user e senha)
         .uri      = "/login.html",
         .method   = HTTP_GET,
         .handler  = login_handler,
         .user_ctx = NULL
     },
     {
+        // tela de home lista todas as páginas de navegação que podem ser acessadas
         .uri      = "/home.html",
         .method   = HTTP_GET,
         .handler  = home_handler,
         .user_ctx = NULL,
     },
     {
-        .uri      = "/overview.html",
-        .method   = HTTP_GET,
-        .handler  = overview_handler,
-        .user_ctx = NULL,
-    },
-    {
-        .uri      = "/settings.html",
-        .method   = HTTP_GET,
-        .handler  = settings_handler,
-        .user_ctx = NULL,
-    },
-    {
+        // seta as informações de conexão wifi
         .uri      = "/setconfig",
         .method   = HTTP_POST,
         .handler  = set_config_handler,
         .user_ctx = NULL,
     },
     {
+        // TODO: Recupera as informações de conexão wifi
         .uri      = "/getconfig",
         .method   = HTTP_GET,
         .handler  = get_config_handler,
         .user_ctx = NULL,
     },
     {
+        // Valida se as credenciais estão corretas
         .uri      = "/credentials",
         .method   = HTTP_POST,
         .handler  = credentials_handler,
         .user_ctx = NULL,
     },
     {
+        // Arquivo css do biblioteca pico css
         .uri      = "/style.css",
         .method   = HTTP_GET,
         .handler  = style_handler,
         .user_ctx = NULL,
     },
     {
+        // redireciona o usuário para a tela de login e finaliza a sessão 
         .uri      = "/logout",
         .method   = HTTP_GET,
         .handler  = logout_handler,
         .user_ctx = NULL,
     },
     {
+        // reseta o equipamento
         .uri      = "/reset",
         .method   = HTTP_GET,
         .handler  = reset_handler,
         .user_ctx = NULL,
     },
-    {
-        .uri      = "/autenticated",
-        .method   = HTTP_GET,
-        .handler  = autenticated_handle,
-        .user_ctx = NULL,
-    },
-    {
+    {   
+        // Verifica se é necessário resetar para salvar alguma 
         .uri      = "/resetneed",
         .method   = HTTP_GET,
         .handler  = resetneed_handler,
         .user_ctx = NULL,
     },
     {
+        // Retorna o arquivo de script para o html
         .uri      = "/scripts.js",
         .method   = HTTP_GET,
         .handler  = scripts_handler,
         .user_ctx = NULL,
     },
     {
+        // executa rotina de scan e retorna redes visíveis
         .uri      = "/scanned_devices",
         .method   = HTTP_GET,
         .handler  = scan_devices_handler,
         .user_ctx = NULL,
     },
     {
+        // mapeia todas as páginas de aplicação que são adicionadas de acordo com o firmware que utiliza este component
         .uri      = "/get_pages",
         .method   = HTTP_GET,
         .handler  = pages_handler,
         .user_ctx = NULL,
+    },
+    {
+        // retorna arquivo css utilizado para estilização interna das páginas de webserver
+        .uri      = "/custom_style.css",
+        .method   = HTTP_GET,
+        .handler  = custom_style_handler,
+        .user_ctx = NULL,
     }
 };
 
-void  WS_Init(httpd_uri_t *app_urls, int number)
+void  WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st *list, int list_len)
 {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
-    config.max_uri_handlers = 18;
+    config.max_uri_handlers = 30;
     config.lru_purge_enable = true;
+
+    WS_Process_list_pages(list, list_len);
 
     httpd_uri_t *union_urls = (httpd_uri_t*)malloc(( sizeof(urls)/sizeof(urls[0]) + number) * sizeof(httpd_uri_t));
     memcpy(union_urls, urls, sizeof(urls));
@@ -562,4 +518,26 @@ void redirect(httpd_req_t *req, const char *data)
     httpd_resp_set_status(req, "303 See Other");
     httpd_resp_set_hdr(req, "Location", data);
     httpd_resp_send(req, NULL, 0);
+}
+
+static void WS_Process_list_pages(WS_Menu_list_st *list, int list_len)
+{
+    char *aux_json_pages = (char*)malloc(sizeof(char) * 400);
+
+    sprintf(json_pages, "{\"pages\": [");
+    
+    for (int w = 0; w < list_len; w++)
+    {
+        sprintf(aux_json_pages, "{\"name\":\"%s\",\"url\":\"%s\"}", list[w].label, list[w].url);
+        strcat(json_pages, aux_json_pages);
+        
+        if (w < list_len - 1)
+        {
+            strcat(json_pages, ",");
+        }
+    }
+
+    strcat(json_pages, "]}");
+
+    printf("PAGES JSON: %s\n", json_pages);
 }

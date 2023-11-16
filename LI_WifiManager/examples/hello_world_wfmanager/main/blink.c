@@ -117,6 +117,12 @@ esp_err_t TESTE_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+esp_err_t TESTE2_handler(httpd_req_t *req)
+{
+    httpd_resp_sendstr(req, "ACHOUU2!");
+    return ESP_OK;
+}
+
 void app_main(void)
 {
     /* Configure the IOMUX register for pad BLINK_GPIO (some pads are
@@ -133,9 +139,26 @@ void app_main(void)
         .method   = HTTP_GET,
         .handler  = TESTE_handler,
         .user_ctx = NULL
+    },
+    {
+        .uri      = "/teste2",
+        .method   = HTTP_GET,
+        .handler  = TESTE2_handler,
+        .user_ctx = NULL
     }};
 
-    WS_Init(urls, 1);
+    WS_Menu_list_st menu_list[] = {
+        {
+            .label = "Teste",
+            .url = "/teste"
+        },
+        {
+            .label = "Teste2",
+            .url = "/teste2"
+        }
+    };
+
+    WS_Init(urls, 2, menu_list, 2);
     gpio_reset_pin(BLINK_GPIO);
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
