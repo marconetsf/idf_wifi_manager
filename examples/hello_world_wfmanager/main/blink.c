@@ -134,18 +134,19 @@ void app_main(void)
     NETIF_Init(app_callback);
 
     httpd_uri_t urls[] = {
-    {
-        .uri      = "/teste",
-        .method   = HTTP_GET,
-        .handler  = TESTE_handler,
-        .user_ctx = NULL
-    },
-    {
-        .uri      = "/teste2",
-        .method   = HTTP_GET,
-        .handler  = TESTE2_handler,
-        .user_ctx = NULL
-    }};
+        {
+            .uri      = "/teste",
+            .method   = HTTP_GET,
+            .handler  = TESTE_handler,
+            .user_ctx = NULL
+        },
+        {
+            .uri      = "/teste2",
+            .method   = HTTP_GET,
+            .handler  = TESTE2_handler,
+            .user_ctx = NULL
+        }
+    };
 
     WS_Menu_list_st menu_list[] = {
         {

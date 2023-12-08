@@ -27,6 +27,15 @@
 
 /* *********************************** *
  *                                     *
+ *              DEFINES               *
+ *                                     *
+ * *********************************** */
+
+#define NETWORK_SCAN_MAX_DEVICES	  15
+
+
+/* *********************************** *
+ *                                     *
  *              global vars            *
  *                                     *
  * *********************************** */
@@ -296,7 +305,7 @@ esp_err_t scan_devices_handler(httpd_req_t *req)
     }
     ESP_LOGI(TAG,"ENTROU NO SCAN_DEVICES_HANDLER");
 
-    Network_scan_result_st res[10];
+    Network_scan_result_st *res = (Network_scan_result_st *) malloc(NETWORK_SCAN_MAX_DEVICES * sizeof(Network_scan_result_st));
     int number_devices = NETIF_ScanNetwork(res);
     	
     char *response_buffer = (char*)malloc(1024*sizeof(char));
@@ -318,9 +327,9 @@ esp_err_t scan_devices_handler(httpd_req_t *req)
 
     httpd_resp_sendstr(req, response_buffer);
 
+    free(res);
     free(response_buffer);
     free(aux_response_buffer);
-
 
     return ESP_OK;
 }
@@ -473,7 +482,7 @@ void  WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st *list, int list
 
         printf("Num itens novos %d\n", number);
         uint32_t arr_size = (sizeof(urls)/sizeof(urls[0])) + number; 
-        printf("Num itens %u\n", arr_size);
+        printf("Num itens %ld\n", arr_size);
         for (int w = 0; w < arr_size; w++)
         {
             printf("registering url: %d\n", w);

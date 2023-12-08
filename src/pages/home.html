@@ -1,60 +1,83 @@
 <!DOCTYPE HTML>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>iPonia</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="./custom_style.css" />
+    <head>
+        <title>Control.It - Home</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body onload="get_button_list()">
-        <main class="container">
-            <div class="iponiaLogo"></div>
-          <section id="buttons">
-            <div class="headings">
-              <h2>iPonia</h2>
-              <h3>Menu</h3>
-            </div>
-            <div class="grid" id = "button_list">
-              <a href="./wifi.html"><button>Wi-fi</button></a>
-            </div>
-          </section>
-        </main>
-        <script>
-            function get_button_list()
+        <div class="limiter">
+			<div class="container-login100">
+				<div class="wrap-login100">
+					<form class="login100-form validate-form">
+						<span class="login100-form-title p-b-26"> Menu Principal </span>
+						<div class="container-login100-form-btn">
+							<div class="wrap-login100-form-btn">
+								<div class="login100-form-bgbtn"></div>
+								<button type="button" class="login100-form-btn" onclick="location.href = './wifi.html';"> WIFI </button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+    </body>
+    <script>
+        function get_button_list()
+        {
+            try {
+                const xhttp = new XMLHttpRequest();
+                xhttp.open("GET", "./get_pages");
+                xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+                
+                xhttp.send();
+
+                xhttp.onreadystatechange = function() 
                 {
-                    try {
-                        const xhttp = new XMLHttpRequest();
-                        xhttp.open("GET", "./get_pages");
-                        xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                        
-                        xhttp.send(JSON.stringify({
-                        "username": "dawdwa",
-                        "password": "dawdwa"
-                        }));
+                    if (this.readyState != 4) return;
+                    const objects = JSON.parse(this.responseText);
 
-                        xhttp.onreadystatechange = function() 
-                        {
-                            if (this.readyState != 4) return;
-                            const objects = JSON.parse(this.responseText);
-
-                            if(objects['pages'].length > 0){
-                                objects['pages'].forEach(updateButtonList);
-                            }else{
-                                document.querySelector("#button_list").innerHTML = '<a href="./wifi.html"><button>Wi-fi</button></a>';
-                            }
-                        }
-                    } catch (error) {
-                        document.querySelector("#button_list").innerHTML = '<a href="./wifi.html"><button>Wi-fi</button></a>';
+                    if(objects['pages'].length > 0){
+                        objects['pages'].forEach(updateButtonList);
                     }
-                    
-                    
                 }
+            } catch (error) {
+                console.log("erro carregar botoes err = ", error)
+            }       
+        }
+        
+        function updateButtonList(item, index, arr) {
+            // Create a new div for each button with the appropriate class
+            const firstDiv = document.createElement("div");
+            firstDiv.className = "container-login100-form-btn";
 
-                function updateButtonList(item, index, arr)
-                {
-                    document.querySelector("#button_list").innerHTML = document.querySelector("#button_list").innerHTML +'<div><a href="'+item['url']+'"><button>'+item['name']+'</button></a></div>';
-                }
-        </script>
-      </body>
-    </html>
+            const secondDiv = document.createElement("div");
+            secondDiv.className = "wrap-login100-form-btn";
+
+            firstDiv.appendChild(secondDiv);
+
+            const thirdDiv = document.createElement("div");
+            thirdDiv.className = "login100-form-bgbtn"
+
+            secondDiv.appendChild(thirdDiv);
+
+            // Create a new button element
+            const buttonElement = document.createElement("button");
+            buttonElement.type = "button";
+            buttonElement.className = "login100-form-btn";
+            buttonElement.innerHTML = item['name']; // Set the button text
+        
+            // Set the button click event to navigate to the specified URL
+            buttonElement.onclick = function() {
+                location.href = item['url'];
+            };
+        
+            // Append the button to the div
+            secondDiv.appendChild(buttonElement);
+        
+            // Append the div to the button_list container
+            document.querySelector(".login100-form").appendChild(firstDiv);
+        }
+    </script>
+  </html>

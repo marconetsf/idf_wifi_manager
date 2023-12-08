@@ -26,7 +26,6 @@
 
 #include "lwip/err.h"
 #include "lwip/sys.h"
-#include "mdns.h"
 #include "lwip/api.h"
 #include "lwip/netdb.h"
 #include "lwip/ip4_addr.h"
@@ -376,9 +375,10 @@ static bool wifi_manager_fetch_wifi_sta_config()
 }
 
 int NETIF_ScanNetwork(Network_scan_result_st *result)
-{
-    wifi_ap_record_t ap_info[NETWORK_SCAN_MAX_DEVICES];
-    uint16_t number = NETWORK_SCAN_MAX_DEVICES;
+{    
+	wifi_ap_record_t* ap_info = (wifi_ap_record_t*)malloc(NETWORK_SCAN_MAX_DEVICES*sizeof(wifi_ap_record_t));
+    
+	uint16_t number = NETWORK_SCAN_MAX_DEVICES;
 
     esp_wifi_scan_start(NULL, true);
     ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));

@@ -1,173 +1,224 @@
 <!DOCTYPE HTML>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>iPonia</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="./custom_style.css" />
+    <head>
+        <title>Control.It - Wifi</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" type="text/css" href="style.css">
     </head>
-        <body onload="scan_wifi()">
-        <!-- <body> -->
-            <div class="container" id="list_wifis">
-                <div class="iponiaLogo"></div>
-                <h1>Redes</h1>
-                <div id="wifiListLoading" aria-busy="true">
-                    Carregando....
+    <body onload="scan_wifi()">
+        <div class="limiter">
+            <div class="container-login100">
+                <div class="wrap-login100">
+                    <div class="container" id="list_wifis">
+                        <div class="container-head">
+                            <h1>Rede</h1> 
+                        </div>
+                        <div class="container-body">
+                            <div id="wifiListLoading"> Carregando.... </div>
+                            <div id="wifiList" style="display:none">
+                                <table id="wifiListTable">
+                                    <tr>
+                                        <th>
+                                            SSID
+                                        </th>
+                                        <th>
+                                            RSSI
+                                        </th>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="container-login100-form-btn" id="ConfigurarManualmenteBtn">
+                        <div class="wrap-login100-form-btn">
+                            <div class="login100-form-bgbtn"></div>
+                            <button class="login100-form-btn" onclick="manual_wifi();"> Configurar manualmente </button>
+                        </div>
+                    </div>
+                    <div class="container-login100-form-btn" id="RecarregarListaBtn">
+                        <div class="wrap-login100-form-btn">
+                            <div class="login100-form-bgbtn"></div>
+                            <button class="login100-form-btn" onclick="location.href = './wifi.html';"> Recarregar Lista </button>
+                        </div>
+                    </div>
+              
+                    <div class="container-login100-form-btn" id="VoltarHome">
+                        <div class="wrap-login100-form-btn">
+                            <div class="login100-form-bgbtn"></div>
+                            <button class="login100-form-btn" onclick="location.href = './home.html';"> Home </button>
+                        </div>
+                    </div>
+                    
+                    <div class="container" id="form_connect" style="display:none">
+                        <h1>Rede</h1>
+                        <h4 id="title_form_connect" style="margin-top: 10px;"></h4>
+                        <form style="margin-top: 5vh;">
+                            <label for="auth_type" id="auth_type_label">
+                                Tipo de rede:
+                                <select class="grey-select" id="auth_type" onchange="manual_wifi_helper();">
+                                    <option value="0" selected>WPA2_PERSONAL</option>
+                                    <option value="1">WPA2_ENTERPRISE</option>
+                                </select>
+                            </label>
+    
+                            <div class="wrap-input100 validate-input" id="userInput" style="display: none;">
+                                <input type="text" placeholder="User" class="input100 field" name="user" id="user" value ="">
+                            </div>
+
+                            <input type="hidden" name="auth" id="auth" value="0">
+                            
+                            <div class="wrap-input100 validate-input">
+                                <input class="input100 field" type="text" name="ssid" id="ssid" placeholder="SSID">
+                            </div>
+                            <div class="wrap-input100 validate-input" data-validate="Enter password">
+                                <input class="input100 field" type="password" name="password" id="password" placeholder="Password">
+                            </div>
+                            
+                            <div class="container-login100-form-btn">
+                                <div class="wrap-login100-form-btn">
+                                    <div class="login100-form-bgbtn"></div>
+                                    <button class="login100-form-btn" onclick="sendNewConfig();"> Conectar </button>
+                                </div>
+                            </div>
+                            
+                            <div class="container-login100-form-btn">
+                                <div class="wrap-login100-form-btn">
+                                    <div class="login100-form-bgbtn"></div>
+                                    <button class="login100-form-btn" onclick="location.href = './wifi.html';"> Voltar </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-                <div id="wifiList" style="display:none">
-                    
-                </div>
-                <a href="./wifi.html"><button type="button" id="RecarregarListaBtn">Recarregar lista</button></a>
-                <button type="button" onclick="manual_wifi();" id="ConfigurarManualmenteBtn">Configurar manualmente</button>
-                <a href="./home.html"><button type="button">Voltar</button></a>
             </div>
+        </div>
+    </body>
+    <script>
+        function scan_wifi()
+        {
+            document.querySelector("#ConfigurarManualmenteBtn").style.display = 'none';
+            document.querySelector("#RecarregarListaBtn").style.display = 'none';
+            document.querySelector("#VoltarHome").style.display = 'none';
+            
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("GET", "./scanned_devices");
+            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhttp.send();
 
-            <div class="container" id="form_connect" style="display:none">
-                <div class="iponiaLogo"></div>
-                <h1 id="title_form_connect"></h1>
-                <form>
-                    <label for="auth_type" id="auth_type_label">
-                        Tipo de rede:
-                        <select id="auth_type" onchange="manual_wifi_helper();">
-                            <option value="0" selected>WPA2_PERSONAL</option>
-                            <option value="1">WPA2_ENTERPRISE</option>
-                        </select>
-                    </label>
-                    <label for="ssid">
-                        SSID:
-                        <input type="text" placeholder="SSID" class="field" name= "ssid" id="ssid" value = "">
-                    </label>
-                    <label for="user" id="user_label">
-                        Usuário:
-                        <input type="text" placeholder="User" class="field" name="user" id="user" value ="">
-                    </label>
-                    <label for="password">
-                        Senha:
-                        <input type="password" placeholder="Senha" class="field" name="password" id="password" value = "">
-                    </label>
-                    <input type="hidden" name="auth" id="auth" value="0">
-                    <button type="button" onclick="sendNewConfig();">Conectar</button>
-                    <a href="./wifi.html"><button type="button">Voltar</button></a>
-                </form>
-            </div>
+            xhttp.onreadystatechange = function() 
+            {
+                if (this.readyState != 4) return;
+                const objects = JSON.parse(this.responseText); 
+                document.querySelector("#wifiListLoading").style.display = 'block';
+                document.querySelector("#wifiList").style.display = 'none';
+                document.querySelector("#form_connect").style.display = 'none';
+                document.querySelector("#list_wifis").style.display = 'block';
 
-            <script>
-                function scan_wifi()
-                {
-                    document.querySelector("#ConfigurarManualmenteBtn").style.display = 'none';
-                    document.querySelector("#RecarregarListaBtn").style.display = 'none';
-                    const xhttp = new XMLHttpRequest();
-                    xhttp.open("GET", "./scanned_devices");
-                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-                    
-                    xhttp.send(JSON.stringify({
-                    "username": "dawdwa",
-                    "password": "dawdwa"
-                    }));
+                if(objects['redes'].length > 0){
+                    objects['redes'].forEach(updateWifiList);
 
-                    xhttp.onreadystatechange = function() 
-                    {
-                        if (this.readyState != 4) return;
-                        const objects = JSON.parse(this.responseText); 
-                        document.querySelector("#wifiListLoading").style.display = 'block';
-                        document.querySelector("#wifiList").style.display = 'none';
-                        document.querySelector("#wifiList").innerHTML = '';
-                        document.querySelector("#form_connect").style.display = 'none';
-                        document.querySelector("#list_wifis").style.display = 'block';
-
-                        if(objects['redes'].length > 0){
-                            objects['redes'].forEach(updateWifiList);
-
-                        }else{
-                            document.querySelector("#wifiList").innerHTML = 'Nenhuma rede encontrada';
-                        }
-
-                        document.querySelector("#ConfigurarManualmenteBtn").style.display = 'block';
-                        document.querySelector("#RecarregarListaBtn").style.display = 'block';
-                        document.querySelector("#wifiListLoading").style.display = 'none';
-                        document.querySelector("#wifiList").style.display = 'block';
-                    }
-                    
+                }else{
+                    document.querySelector("#wifiList").innerHTML = 'Nenhuma rede encontrada';
                 }
 
-                function updateWifiList(item, index, arr)
+                document.querySelector("#ConfigurarManualmenteBtn").style.display = 'block';
+                document.querySelector("#RecarregarListaBtn").style.display = 'block';
+                document.querySelector("#VoltarHome").style.display = 'block';
+                document.querySelector("#wifiListLoading").style.display = 'none';
+                document.querySelector("#wifiList").style.display = 'block';
+            }
+            
+        }
+
+        function updateWifiList(item, index, arr)
+        {
+            document.querySelector("#wifiListTable").innerHTML = document.querySelector("#wifiListTable").innerHTML +
+            '<tr onclick="selectWifi(' + "'" + item['ssid'] + "'" + ',' + "'" + item['auth'] + "'" + ')">' +
+            '<td>' + item['ssid'] + '</td>' +
+            '<td>' + item['rssi'] + '</td>' +
+            '</tr><br>';
+        }
+
+
+        function selectWifi(ssid, auth)
+        {
+            document.querySelector("#ConfigurarManualmenteBtn").style.display = 'none';
+            document.querySelector("#RecarregarListaBtn").style.display = 'none';
+            document.querySelector("#VoltarHome").style.display = 'none';
+            
+            document.querySelector("#ssid").value = ssid;
+            document.querySelector("#auth").value = auth;
+            document.querySelector("#ssid").readOnly = true;
+            
+            document.querySelector("#form_connect").style.display = 'block';
+            document.querySelector("#auth_type_label").style.display = 'none';
+            document.querySelector("#list_wifis").style.display = 'none';
+            document.querySelector("#user").style.display = 'none';
+            document.querySelector("#userInput").style.display = 'none';
+
+            if(auth != 0){
+                document.querySelector("#userInput").style.display = 'block';
+                document.querySelector("#user").style.display = 'block';
+            }                    
+        }
+
+        function manual_wifi()
+        {
+            document.querySelector("#ConfigurarManualmenteBtn").style.display = 'none';
+            document.querySelector("#RecarregarListaBtn").style.display = 'none';
+            document.querySelector("#VoltarHome").style.display = 'none';
+            
+            document.querySelector("#title_form_connect").textContent = "Conectar manualmente";
+            document.querySelector("#ssid").value = "";
+            document.querySelector("#auth").value = "";
+            document.querySelector("#ssid").readOnly = false;
+            document.querySelector("#auth_type_label").style.display = 'flex';
+            document.querySelector("#form_connect").style.display = 'block';
+            document.querySelector("#list_wifis").style.display = 'none';
+            document.querySelector("#user").style.display = 'none';
+            document.querySelector("#userInput").style.display = 'none';                    
+            manual_wifi_helper();
+        }
+
+        function manual_wifi_helper()
+        {
+            if (document.querySelector("#auth_type").value == "0"){
+                document.querySelector("#auth").value = "0";
+                document.querySelector("#user").style.display = 'none';
+                document.querySelector("#userInput").style.display = 'none';
+            }else{
+                document.querySelector("#auth").value = "1";
+                document.querySelector("#userInput").style.display = 'block';
+                document.querySelector("#user").style.display = 'block';
+            }
+            return;
+        }
+
+        function sendNewConfig()
+        {
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("POST", "./setconfig");
+            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            context = "netw-config";
+            json_to_send = JSON.stringify({
+                "context": context,
+                "ssid": document.querySelector("#ssid").value,
+                "password": document.querySelector("#password").value,
+                "auth": document.querySelector("#auth").value,
+                "user": document.querySelector("#user").value
+                })
+
+            console.log(json_to_send);
+            xhttp.send(json_to_send);
+            xhttp.onreadystatechange = function() 
+            {
+                if (this.readyState == 4) 
                 {
-                    document.querySelector("#wifiList").innerHTML = document.querySelector("#wifiList").innerHTML +'<div onclick="selectWifi('+"'"+item['ssid']+"'"+','+"'"+item['auth']+"'"+')">' +item['ssid'] + "</div><br>";
+                    console.log("data sent succesfuly");
                 }
-
-                function selectWifi(ssid,auth)
-                {
-                    document.querySelector("#title_form_connect").textContent = "Conectar na rede "+ssid;
-                    document.querySelector("#ssid").value = ssid;
-                    document.querySelector("#auth").value = auth;
-                    document.querySelector("#ssid").readOnly = true;
-                    document.querySelector("#form_connect").style.display = 'block';
-                    document.querySelector("#auth_type_label").style.display = 'none';
-                    document.querySelector("#list_wifis").style.display = 'none';
-                    document.querySelector("#user").style.display = 'none';
-                    document.querySelector("#user_label").style.display = 'none';
-
-                    if(auth != 0){
-                        document.querySelector("#user_label").style.display = 'block';
-                        document.querySelector("#user").style.display = 'block';
-                    }                    
-                }
-
-                function manual_wifi()
-                {
-                    document.querySelector("#title_form_connect").textContent = "Conectar manualmente";
-                    document.querySelector("#ssid").value = "";
-                    document.querySelector("#auth").value = "";
-                    document.querySelector("#ssid").readOnly = false;
-                    document.querySelector("#auth_type_label").style.display = 'block';
-                    document.querySelector("#form_connect").style.display = 'block';
-                    document.querySelector("#list_wifis").style.display = 'none';
-                    document.querySelector("#user").style.display = 'none';
-                    document.querySelector("#user_label").style.display = 'none';                    
-                    manual_wifi_helper();
-                }
-
-                function manual_wifi_helper()
-                {
-                    if (document.querySelector("#auth_type").value == "0"){
-                        document.querySelector("#auth").value = "0";
-                        document.querySelector("#user").style.display = 'none';
-                        document.querySelector("#user_label").style.display = 'none';
-                    }else{
-                        document.querySelector("#auth").value = "1";
-                        document.querySelector("#user_label").style.display = 'block';
-                        document.querySelector("#user").style.display = 'block';
-                    }
-                    return;
-                }
-
-                function sendNewConfig()
-                {
-                    const xhttp = new XMLHttpRequest();
-                    xhttp.open("POST", "./setconfig");
-                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-                    context = "netw-config";
-                    json_to_send = JSON.stringify({
-                        "context": context,
-                        "ssid": document.querySelector("#ssid").value,
-                        "password": document.querySelector("#password").value,
-                        "auth": document.querySelector("#auth").value,
-                        "user": document.querySelector("#user").value
-                        })
-
-                    console.log(json_to_send);
-                    xhttp.send(json_to_send);
-                    xhttp.onreadystatechange = function() 
-                    {
-                        if (this.readyState == 4) 
-                        {
-                            console.log("data sent succesfuly");
-                        }
-                    }
-                }
-            </script>
-
-        </body>
-    </html>
+            }
+        }
+    </script>
+</html>

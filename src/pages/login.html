@@ -1,64 +1,73 @@
 <!DOCTYPE HTML>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>iPonia</title>
-    <link rel="stylesheet" href="./style.css" />
-    <link rel="stylesheet" href="./custom_style.css" />
+    <head>
+		<title>Control.It - Login</title>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" type="text/css" href="/style.css">
     </head>
-        <body>
-            <main class="container">
-                <div class="container">
-                    <article>
-                    <div class="iponiaLogo"></div>
-                    <h1>Login</h1>
-                    <form>
-                        <input type="text" placeholder="Usuário" name= "username" id="username" value = "">
-                        <input type="password" placeholder="Senha" name="password" id="password" value = "">
-                        <input type="submit" onclick="login(); return false;" class="btn">
-                    </form>
-                    </article>
-                </div>
-            </main>
-            
+    <body>
+		<div class="limiter">
+			<div class="container-login100">
+				<div class="wrap-login100">
+					<form class="login100-form validate-form">
+						<span class="login100-form-title p-b-26"> Login </span>
 
-            <script>
-                function login() 
+						<div class="wrap-input100 validate-input">
+							<input class="input100" type="text" name="Username" id="username" placeholder="Username">
+						</div>
+
+						<div class="wrap-input100 validate-input" data-validate="Enter password">
+							<input class="input100" type="password" name="pass" id="password" placeholder="Password">
+						</div>
+
+						<div class="container-login100-form-btn">
+							<div class="wrap-login100-form-btn">
+								<div class="login100-form-bgbtn"></div>
+								<button type="button" class="login100-form-btn"  onclick="login()"> Login </button>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</body>
+
+    <script>
+        function login() 
+        {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            const xhttp = new XMLHttpRequest();
+            xhttp.open("POST", "/credentials");
+            xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+
+            xhttp.send(JSON.stringify({
+                "username": username,
+                "password": password
+            }));
+
+            xhttp.onreadystatechange = function () 
+            {
+                if (this.readyState == 4) 
                 {
-                    const username = document.getElementById("username").value;
-                    const password = document.getElementById("password").value;
-
-                    const xhttp = new XMLHttpRequest();
-                    xhttp.open("POST", "/credentials");
-                    xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
-
-                    xhttp.send(JSON.stringify({
-                        "username": username,
-                        "password": password
-                    }));
-
-                    xhttp.onreadystatechange = function () 
+                    const objects = JSON.parse(this.responseText);
+                    console.log(objects.loginStatus);
+                    
+                    if (objects.loginStatus == "SUCCESS")
                     {
-                        if (this.readyState == 4) 
-                        {
-                            const objects = JSON.parse(this.responseText);
-                            console.log(objects.loginStatus);
-                            
-                            if (objects.loginStatus == "SUCCESS")
-                            {
-                                location.href = "/home.html";
-                            }
-                            else
-                            {
-                                alert('Credenciais invalidas');
-                            }
-                        }
-                    };
-
-                    return false;
+                        location.href = "/home.html";
+                    }
+                    else
+                    {
+                        alert('Credenciais invalidas');
+                    }
                 }
-            </script>
+            };
 
-        </body>
-    </html>
+            return false;
+        }
+    </script>
+</html>
