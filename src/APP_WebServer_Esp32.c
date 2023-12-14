@@ -45,9 +45,6 @@ char default_password[] = "password";
 bool flag_isLogged = false;
 char json_pages[1024] = {0};
 
-bool post_reception(httpd_req_t *req, char *buf, int size_buf);
-void redirect(httpd_req_t *req, const char *data);
-
 // uint16_t func_type_cmp(cJSON* func_type);
 // uint16_t data_type_size(cJSON* data_type);
 

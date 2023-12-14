@@ -20,4 +20,7 @@ typedef struct
 void WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st* list, int list_len);
 void WS_Deinit(void);
 
+bool post_reception(httpd_req_t *req, char *buf, int size_buf);
+void redirect(httpd_req_t *req, const char *data);
+
 #endif /*_LI_WEBSERVER_ESP_*/
