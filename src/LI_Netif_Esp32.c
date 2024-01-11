@@ -103,6 +103,8 @@ void NETIF_Init(void (*callback)())
     nvs_flash_init();
     ESP_ERROR_CHECK_WITHOUT_ABORT(nvs_sync_create());
 	config->auth_type = NETWORK_WPA2_PERSONAL; // AuthMode default é o wpa2 personal
+	sprintf(config->ssid, "default");
+	sprintf(config->pswd, "default");
 
 	wifi_manager_config_sta = (wifi_config_t*)malloc(sizeof(wifi_config_t));
 
