@@ -77,8 +77,8 @@ const char wifi_manager_nvs_namespace[] = "espwifimgr";
 static EventGroupHandle_t s_wifi_event_group;
 static const char *TAG        = "WIFI_TAG";
 static int s_retry_num        = 0;
-static void (*Network_Callback)(Network_event_et, Network_Message_st*);
-static Network_Message_st network_message;
+static void (*Network_Callback)(Netif_event_et, Netif_Message_st*);
+static Netif_Message_st network_message;
 wifi_config_t* wifi_manager_config_sta = NULL;
 Netif_Wifi_st *config;
 static esp_netif_t *esp_netif_ap = NULL;
@@ -91,7 +91,7 @@ static esp_netif_t *esp_netif_sta = NULL;
  *                                     *
  * *********************************** */
 
-void NETIF_Init(void (*callback)())
+void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
 {
     config = (Netif_Wifi_st*)malloc(sizeof(Netif_Wifi_st));
     Network_Callback = callback;
@@ -110,8 +110,8 @@ void NETIF_Init(void (*callback)())
 
     if (wifi_manager_fetch_wifi_sta_config())
     {
-        memcpy(config->ssid, wifi_manager_config_sta->sta.ssid, sizeof(config->ssid));
-        memcpy(config->pswd, wifi_manager_config_sta->sta.password, sizeof(config->pswd));
+        memcpy(config->ssid, wifi_manager_config_sta->sta.ssid, 32);
+        memcpy(config->pswd, wifi_manager_config_sta->sta.password, 64);
         
         printf("Credenciais:\n");
         printf("- User: %s\n", config->user);
@@ -144,8 +144,8 @@ void NETIF_Init(void (*callback)())
                         },
             },
     };
-    memcpy(wifi_config_sta.sta.ssid, (uint8_t*)config->ssid, sizeof(config->ssid));
-    memcpy (wifi_config_sta.sta.password, (uint8_t*)config->pswd, sizeof(config->pswd));
+    memcpy(wifi_config_sta.sta.ssid, (uint8_t*)config->ssid, 32);
+    memcpy (wifi_config_sta.sta.password, (uint8_t*)config->pswd, 64);
 
     wifi_config_t ap_config = {
 		.ap = {
@@ -156,18 +156,18 @@ void NETIF_Init(void (*callback)())
 			.beacon_interval = DEFAULT_AP_BEACON_INTERVAL,
 		},
 	};
-	memcpy(ap_config.ap.ssid, wifi_settings.ap_ssid, sizeof(wifi_settings.ap_ssid));
+	memcpy(ap_config.ap.ssid, wifi_settings.ap_ssid, 32);
 
     /* if the password lenght is under 8 char which is the minium for WPA2, the access point starts as open */
 	if (strlen((char *)wifi_settings.ap_pwd) < WPA2_MINIMUM_PASSWORD_LENGTH)
 	{
 		ap_config.ap.authmode = WIFI_AUTH_OPEN;
-		memset(ap_config.ap.password, 0x00, sizeof(ap_config.ap.password));
+		memset(ap_config.ap.password, 0x00, 64);
 	}
 	else
 	{
 		ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
-		memcpy(ap_config.ap.password, wifi_settings.ap_pwd, sizeof(wifi_settings.ap_pwd));
+		memcpy(ap_config.ap.password, wifi_settings.ap_pwd, 64);
 	}
 
     if(config->auth_type == NETWORK_WPA2_ENTERPRISE)
@@ -203,7 +203,8 @@ void NETIF_Init(void (*callback)())
 
     if (bits & WIFI_CONNECTED_BIT) 
     {
-        Network_Callback(NETWORK_INTERFACE_CONNECTED, &network_message);
+		printf("Conectado na rede\n");
+        //Network_Callback(NETIF_INTERFACE_CONNECTED, &network_message);
     }
     else if (bits & WIFI_FAIL_BIT) 
     {
@@ -236,11 +237,13 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) 
     {
         esp_wifi_connect();
+		Network_Callback(NETIF_INTERFACE_STARTED, &network_message);
+		ESP_LOGI(TAG, "wifi_init_sta finished.");
     } 
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) 
     {
 		xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-		Network_Callback(NETWORK_INTERFACE_DISCONNECTED, &network_message);
+		Network_Callback(NETIF_INTERFACE_DISCONNECTED, &network_message);
         if (s_retry_num < NETWORK_MAXIMUM_CONNECT_RETRY) 
         {
             esp_wifi_connect();
@@ -255,7 +258,7 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-		Network_Callback(NETWORK_INTERFACE_CONNECTED, &network_message);
+		Network_Callback(NETIF_INTERFACE_CONNECTED, &network_message);
     }
 }
 
@@ -323,8 +326,8 @@ static bool wifi_manager_fetch_wifi_sta_config()
             {
                 config->auth_type = NETWORK_WPA2_ENTERPRISE;
 
-                uint8_t* tmp_user = (uint8_t*)malloc(sizeof(config->user));
-                memset(tmp_user,0x00,sizeof(config->user));
+                uint8_t* tmp_user = (uint8_t*)malloc(64);
+                memset(tmp_user,0x00,64);
                 sz = sizeof(config->user);
 		
 		        esp_err = nvs_get_blob(handle, "user", tmp_user, &sz);
@@ -334,8 +337,8 @@ static bool wifi_manager_fetch_wifi_sta_config()
                     strcpy(config->user, (char*)tmp_user);
                 }
 
-                uint8_t* tmp_pswd = (uint8_t*)malloc(sizeof(config->pswd));
-                memset(tmp_user,0x00,sizeof(config->pswd));
+                uint8_t* tmp_pswd = (uint8_t*)malloc(64);
+                memset(tmp_user,0x00,64);
                 sz = sizeof(config->pswd);
 		
 		        esp_err = nvs_get_blob(handle, "password", tmp_pswd, &sz);
@@ -376,7 +379,7 @@ static bool wifi_manager_fetch_wifi_sta_config()
 
 }
 
-int NETIF_ScanNetwork(Network_scan_result_st *result)
+int NETIF_ScanNetwork(Netif_scan_result_st *result)
 {    
 	wifi_ap_record_t* ap_info = (wifi_ap_record_t*)malloc(NETWORK_SCAN_MAX_DEVICES*sizeof(wifi_ap_record_t));
     
@@ -445,8 +448,8 @@ esp_err_t NETIF_SetConfig(Netif_Wifi_st newConfig)
 		}
 
 		//Aloco a memória para receber a informação do modo de autenticação
-		uint8_t* tmp_mod = (uint8_t*)malloc(sizeof(newConfig.auth_type_str));
-		memset(tmp_mod,0x00,sizeof(newConfig.auth_type_str));
+		uint8_t* tmp_mod = (uint8_t*)malloc(30);
+		memset(tmp_mod,0x00,30);
 		sz = sizeof(newConfig.auth_type_str);
 		
 		esp_err = nvs_get_blob(handle, "mode", tmp_mod, &sz);
@@ -464,8 +467,8 @@ esp_err_t NETIF_SetConfig(Netif_Wifi_st newConfig)
 		}
 		
 		// Aloco a memória para receber a informação do usuário (usuário utilizado para a conexão wpa2enterprise)
-		uint8_t* tmp_user = (uint8_t*)malloc(sizeof(newConfig.user));
-		memset(tmp_user,0x00,sizeof(newConfig.user));
+		uint8_t* tmp_user = (uint8_t*)malloc(64);
+		memset(tmp_user,0x00,64);
 		sz = sizeof(newConfig.user);
 		
 		esp_err = nvs_get_blob(handle, "user", tmp_user, &sz);
@@ -586,8 +589,8 @@ esp_err_t NETIF_TryConnect(Netif_Wifi_st config)
                         },
             },
     };
-    memcpy(wifi_config_sta.sta.ssid, (uint8_t*)config.ssid, sizeof(config.ssid));
-    memcpy (wifi_config_sta.sta.password, (uint8_t*)config.pswd, sizeof(config.pswd));
+    memcpy(wifi_config_sta.sta.ssid, (uint8_t*)config.ssid, 32);
+    memcpy (wifi_config_sta.sta.password, (uint8_t*)config.pswd, 64);
 
 	if(config.auth_type == NETWORK_WPA2_ENTERPRISE)
     {

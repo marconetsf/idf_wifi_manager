@@ -120,6 +120,7 @@ typedef struct
     char dns_fallback[16];
 }Netif_DHCP_Config_st;
 
+typedef void (*page_function)(void);
 typedef struct 
 {
     Netif_DHCP_Config_st dhcp_config;
@@ -129,39 +130,29 @@ typedef struct
     char pswd[64];
     char user[64];
     uint8_t channel;
+    page_function pages;
 }Netif_Wifi_st;
 
 typedef enum
 {
-    NETWORK_INTERFACE_SETTED = 0,
-    NETWORK_INTERFACE_CONNECTED,
-    NETWORK_INTERFACE_CONNECTION_FAILED,
-    NETWORK_INTERFACE_DISCONNECTED,
-    NETWORK_PLATFORM_PROTOCOL_SETTED,
-    NETWORK_PLATFORM_PROTOCOL_CONNECTED,
-    NETWORK_PLATFORM_PROTOCOL_MESSAGE_RECEIVED,
-    NETWORK_PLATFORM_PROTOCOL_CONNECTION_FAILED,
-    NETWORK_PLATFORM_PROTOCOL_DISCONNECTED,
-    NETWORK_INTERNAL_PROTOCOL_CONNECTED,
-    NETWORK_INTERNAL_PROTOCOL_MESSAGE_RECEIVED,
-    NETWORK_INTERNAL_PROTOCOL_CONNECTION_FAILED,
-    NETWORK_INTERNAL_PROTOCOL_DISCONNECTED,
-    NETWORK_PROCEDURE_FINISHED
-}Network_event_et;
+    NETIF_INTERFACE_STARTED = 0,
+    NETIF_INTERFACE_CONNECTED = 1,
+    NETIF_INTERFACE_DISCONNECTED = 3,
+}Netif_event_et;
 
 typedef struct 
 {
     uint8_t cmd;
     uint8_t *payload;
     uint16_t payload_len;
-}Network_Message_st;
+}Netif_Message_st;
 
 typedef struct 
 {
     char name[32];
     int rssi;
     Netif_Connection_type_et auth;
-}Network_scan_result_st;
+}Netif_scan_result_st;
 
 /**
  * @brief initialize wifi stack
@@ -169,7 +160,7 @@ typedef struct
  * @param config struct with wifi general config
  * @param callback callback function to receive wifi events
  */
-void NETIF_Init(void (*callback)());
+void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)());
 
 /**
  * @brief deinitialize wifi stack
@@ -185,7 +176,7 @@ bool NETIF_Deinit(void);
  * @param result return scanned devices
  * @return int number of scanned devices
  */
-int NETIF_ScanNetwork(Network_scan_result_st *result);
+int NETIF_ScanNetwork(Netif_scan_result_st *result);
 
 /**
  * @brief Write on flash new config

@@ -29,7 +29,7 @@ void app_callback(Network_event_et evt, Network_Message_st* msg)
         }
         break;
 
-        case NETWORK_INTERFACE_CONNECTED:
+        case NETIF_INTERFACE_CONNECTED:
         {
             printf("NETWORK_INTERFACE_CONNECTED\n");
         }
@@ -41,7 +41,7 @@ void app_callback(Network_event_et evt, Network_Message_st* msg)
         }
         break;
 
-        case NETWORK_INTERFACE_DISCONNECTED:
+        case NETIF_INTERFACE_DISCONNECTED:
         {
             printf("NETWORK_INTERFACE_DISCONNECTED\n");
 

@@ -40,10 +40,10 @@
  *                                     *
  * *********************************** */
 
-char default_login[] = "admin";
-char default_password[] = "password";
-bool flag_isLogged = false;
-char json_pages[1024] = {0};
+static char default_login[] = "admin";
+static char default_password[] = "password";
+static bool flag_isLogged = false;
+static char json_pages[1024] = {0};
 
 // uint16_t func_type_cmp(cJSON* func_type);
 // uint16_t data_type_size(cJSON* data_type);
@@ -55,8 +55,8 @@ static void WS_Process_list_pages(WS_Menu_list_st *list, int list_len);
 
 esp_err_t index_handler(httpd_req_t *req)
 {
-    if (flag_isLogged) redirect(req, "/home.html");
-    else redirect(req, "/login.html");
+    if (flag_isLogged) WS_Redirect(req, "/home.html");
+    else WS_Redirect(req, "/login.html");
     return ESP_OK;
 }
 
@@ -75,7 +75,7 @@ esp_err_t home_handler(httpd_req_t *req)
 {
     if (!flag_isLogged)
     {
-        redirect(req, "/login.html");
+        WS_Redirect(req, "/login.html");
         return ESP_OK;
     }
 
@@ -94,7 +94,7 @@ esp_err_t wifi_handler(httpd_req_t *req)
 {
     if (!flag_isLogged)
     {
-        redirect(req, "/login.html");
+        WS_Redirect(req, "/login.html");
         return ESP_OK;
     }
 
@@ -111,7 +111,7 @@ esp_err_t wifi_handler(httpd_req_t *req)
 
 esp_err_t get_config_handler(httpd_req_t *req)
 {
-    redirect(req, "/login.html");
+    WS_Redirect(req, "/login.html");
     return ESP_OK;
 
     // Device_Config_st config;
@@ -145,7 +145,7 @@ esp_err_t set_config_handler(httpd_req_t *req)
     // Device_Config_st config;
     // memcpy(&config, Device_GetConfig(), sizeof(Device_Config_st));
 
-    if(!post_reception(req, buf, size)) return ESP_FAIL;
+    if(!WS_PostReception(req, buf, size)) return ESP_FAIL;
 
     cJSON *payload = cJSON_Parse(buf);
     cJSON *context = cJSON_GetObjectItem(payload, "context");
@@ -190,7 +190,7 @@ esp_err_t credentials_handler(httpd_req_t *req)
     int   size = (req->content_len) + 1;
     buf = (char *) calloc(size, sizeof(char));
 
-    if(!post_reception(req, buf, size)) return ESP_FAIL;
+    if(!WS_PostReception(req, buf, size)) return ESP_FAIL;
 
     char username[50];
     char password[50];
@@ -248,7 +248,7 @@ esp_err_t style_handler(httpd_req_t *req)
 esp_err_t logout_handler(httpd_req_t *req)
 {
     flag_isLogged = false;
-    redirect(req, "/login.html");
+    WS_Redirect(req, "/login.html");
     return ESP_OK;
 }
 
@@ -256,7 +256,7 @@ esp_err_t reset_handler(httpd_req_t *req)
 {
     if (!flag_isLogged)
     {
-        redirect(req, "/login.html");
+        WS_Redirect(req, "/login.html");
         return ESP_OK;
     }
 
@@ -277,7 +277,7 @@ esp_err_t scripts_handler(httpd_req_t *req)
 {
     if (!flag_isLogged)
     {
-        redirect(req, "/login.html");
+        WS_Redirect(req, "/login.html");
         return ESP_OK;
     }
     ESP_LOGI(TAG,"ENTROU NO PAGEMOD_HANDLER");
@@ -297,12 +297,12 @@ esp_err_t scan_devices_handler(httpd_req_t *req)
 {
     if (!flag_isLogged)
     {
-        redirect(req, "/login.html");
+        WS_Redirect(req, "/login.html");
         return ESP_OK;
     }
     ESP_LOGI(TAG,"ENTROU NO SCAN_DEVICES_HANDLER");
 
-    Network_scan_result_st *res = (Network_scan_result_st *) malloc(NETWORK_SCAN_MAX_DEVICES * sizeof(Network_scan_result_st));
+    Netif_scan_result_st *res = (Netif_scan_result_st *) malloc(NETWORK_SCAN_MAX_DEVICES * sizeof(Netif_scan_result_st));
     int number_devices = NETIF_ScanNetwork(res);
     	
     char *response_buffer = (char*)malloc(1024*sizeof(char));
@@ -335,7 +335,7 @@ esp_err_t pages_handler(httpd_req_t *req)
 {
     if (!flag_isLogged)
     {
-        redirect(req, "/login.html");
+        WS_Redirect(req, "/login.html");
         return ESP_OK;
     }
     ESP_LOGI(TAG,"ENTROU NO PAGES_HANDLER");
@@ -502,7 +502,7 @@ void strShiftLeft(char *string, size_t shiftLen)
     memmove(string, string + shiftLen, strlen(string) + 1);
 }
 
-bool post_reception(httpd_req_t *req, char *buf, int size_buf)
+bool WS_PostReception(httpd_req_t *req, char *buf, int size_buf)
 {
     int ret = 0, remaining = req->content_len;
     ESP_LOGI(TAG, "Size buf: %i", size_buf);
@@ -544,7 +544,7 @@ bool post_reception(httpd_req_t *req, char *buf, int size_buf)
     return 1;
 }
 
-void redirect(httpd_req_t *req, const char *data)
+void WS_Redirect(httpd_req_t *req, const char *data)
 {
     ESP_LOGI(TAG, "Redirecting to %s", data);
     httpd_resp_set_status(req, "303 See Other");
