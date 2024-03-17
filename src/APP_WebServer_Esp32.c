@@ -382,7 +382,6 @@ httpd_uri_t urls[] = {
         .user_ctx = NULL,
     },
     {
-        // TODO: Recupera as informações de conexão wifi
         .uri      = "/getconfig",
         .method   = HTTP_GET,
         .handler  = get_config_handler,
