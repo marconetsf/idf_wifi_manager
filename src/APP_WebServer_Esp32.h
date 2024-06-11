@@ -19,6 +19,7 @@ typedef struct
 
 void WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st* list, int list_len);
 void WS_Deinit(void);
+bool WS_IsLogged(void);
 
 bool WS_PostReception(httpd_req_t *req, char *buf, int size_buf);
 void WS_Redirect(httpd_req_t *req, const char *data);

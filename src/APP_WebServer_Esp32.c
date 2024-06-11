@@ -572,3 +572,8 @@ static void WS_Process_list_pages(WS_Menu_list_st *list, int list_len)
 
     printf("PAGES JSON: %s\n", json_pages);
 }
+
+bool WS_IsLogged(void)
+{
+    return flag_isLogged;
+}

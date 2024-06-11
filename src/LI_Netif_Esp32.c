@@ -20,6 +20,8 @@
 #include "esp_event.h"
 #include "esp_log.h"
 #include "esp_wpa2.h"
+//#include "esp_efuse.h"
+#include "esp_mac.h"
 #include "nvs.h"
 #include "nvs_flash.h"
 #include "nvs_sync.h"
@@ -156,6 +158,9 @@ void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
 			.beacon_interval = DEFAULT_AP_BEACON_INTERVAL,
 		},
 	};
+	uint8_t mac[6];
+	esp_efuse_mac_get_default(mac);
+	sprintf((char*)wifi_settings.ap_ssid, "%s_%X%X%X", "LIAP", mac[3], mac[4], mac[5]);
 	memcpy(ap_config.ap.ssid, wifi_settings.ap_ssid, 32);
 
     /* if the password lenght is under 8 char which is the minium for WPA2, the access point starts as open */
