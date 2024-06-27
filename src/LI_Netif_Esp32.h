@@ -224,6 +224,7 @@ void NETIF_SetFallBackNetwork(char *ssid, char* password);
 bool NETIF_GetConnectionStatus();
 
 char* NETIF_GetSSID();
+int NETIF_GetRSSI();
 
 /**
  * @brief Get the current wifi configuration

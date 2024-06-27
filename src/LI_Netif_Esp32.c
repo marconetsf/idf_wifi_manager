@@ -676,3 +676,10 @@ void NETIF_SetFallBackNetwork(char *ssid, char* password)
 	strcpy(fallbackNetwork.auth_type_str, AUTHMODE_WPA2_PERSONAL);
 	fallbackNetwork.auth_type = 0;
 }
+
+int NETIF_GetRSSI(void)
+{
+	wifi_ap_record_t ap_info;
+	esp_wifi_sta_get_ap_info(&ap_info);
+	return ap_info.rssi;
+}
