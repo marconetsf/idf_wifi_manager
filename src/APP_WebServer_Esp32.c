@@ -345,6 +345,24 @@ esp_err_t pages_handler(httpd_req_t *req)
     return ESP_OK;
 }
 
+esp_err_t wifi_status_handler(httpd_req_t *req)
+{
+    ESP_LOGI(TAG,"ENTROU NO PAGES_HANDLER");
+    cJSON *response = cJSON_CreateObject();
+    cJSON_AddNumberToObject(response, "status", NETIF_GetConnectionStatus());
+    if (NETIF_GetSSID() != NULL)
+        cJSON_AddStringToObject(response, "ssid", NETIF_GetSSID());
+    else
+        cJSON_AddStringToObject(response, "ssid", "none");
+    char *buffer_to_print = cJSON_PrintUnformatted(response);
+    printf("Status: %s\n", buffer_to_print);
+
+    httpd_resp_sendstr(req, buffer_to_print);
+    free(buffer_to_print);
+    cJSON_Delete(response);
+    return ESP_OK;
+}
+
 httpd_uri_t urls[] = {
     {
         // Apenas redireciona para o /login.html
@@ -449,7 +467,14 @@ httpd_uri_t urls[] = {
         .method   = HTTP_GET,
         .handler  = custom_style_handler,
         .user_ctx = NULL,
+    },
+    {
+        .uri    = "/wifi_status",
+        .method = HTTP_GET,
+        .handler = wifi_status_handler,
+        .user_ctx = NULL
     }
+
 };
 
 void  WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st *list, int list_len)
@@ -457,7 +482,7 @@ void  WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st *list, int list
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
-    config.max_uri_handlers = 30;
+    config.max_uri_handlers = 35;
     config.lru_purge_enable = true;
 
     WS_Process_list_pages(list, list_len);

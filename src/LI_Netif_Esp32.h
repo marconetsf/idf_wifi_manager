@@ -138,6 +138,7 @@ typedef enum
     NETIF_INTERFACE_STARTED = 0,
     NETIF_INTERFACE_CONNECTED = 1,
     NETIF_INTERFACE_DISCONNECTED = 3,
+    NETIF_INTERFACE_GOT_ACCESSED = 127
 }Netif_event_et;
 
 typedef struct 
@@ -213,6 +214,16 @@ esp_netif_t *NETIF_GetEspNetifSTA();
  * @param password password of the newtork 
  */
 void NETIF_SetFallBackNetwork(char *ssid, char* password);
+
+/**
+ * @brief Get connection status
+ * 
+ * @return true if connected
+ * @return false if not connected
+ */
+bool NETIF_GetConnectionStatus();
+
+char* NETIF_GetSSID();
 
 /**
  * @brief Get the current wifi configuration

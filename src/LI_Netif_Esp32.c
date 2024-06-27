@@ -85,6 +85,7 @@ wifi_config_t* wifi_manager_config_sta = NULL;
 Netif_Wifi_st *config;
 static esp_netif_t *esp_netif_ap = NULL;
 static esp_netif_t *esp_netif_sta = NULL;
+bool has_connection = false;
 
 
 /* *********************************** *
@@ -127,6 +128,7 @@ void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     esp_event_handler_instance_t instance_any_id;
     esp_event_handler_instance_t instance_got_ip;
+    esp_event_handler_instance_t instance_give_ip;
 
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
@@ -136,6 +138,8 @@ void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
 
     ESP_ERROR_CHECK(esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &NETIF_Callback, NULL, &instance_any_id));
     ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &NETIF_Callback, NULL, &instance_got_ip));
+    ESP_ERROR_CHECK(esp_event_handler_instance_register(IP_EVENT, IP_EVENT_AP_STAIPASSIGNED, &NETIF_Callback, NULL, &instance_give_ip));
+
 
     wifi_config_t wifi_config_sta = {
     .sta = {
@@ -251,9 +255,17 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
 		Network_Callback(NETIF_INTERFACE_DISCONNECTED, &network_message);
         if (s_retry_num < NETWORK_MAXIMUM_CONNECT_RETRY) 
         {
+			wifi_sta_list_t wifi_sta_list;
+			esp_wifi_ap_get_sta_list(&wifi_sta_list);
+			if (wifi_sta_list.num > 0 && s_retry_num > 2)
+			{
+				return;
+			}
             esp_wifi_connect();
             s_retry_num++;
+			
             ESP_LOGI(TAG, "retry to connect to the AP");
+			has_connection = false;
         }
         ESP_LOGI(TAG,"connect to the AP fail");
     } 
@@ -264,7 +276,14 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
 		Network_Callback(NETIF_INTERFACE_CONNECTED, &network_message);
+		has_connection = true;
     }
+	else if (event_base == IP_EVENT && event_id == IP_EVENT_AP_STAIPASSIGNED)
+	{
+		ip_event_ap_staipassigned_t* event = (ip_event_ap_staipassigned_t*) event_data;
+		ESP_LOGE(TAG, "assigned ip:" IPSTR, IP2STR(&event->ip));
+		Network_Callback(NETIF_INTERFACE_GOT_ACCESSED, &network_message);
+	}
 }
 
 static bool wifi_manager_fetch_wifi_sta_config()
@@ -382,6 +401,21 @@ static bool wifi_manager_fetch_wifi_sta_config()
 		return false;
 	}
 
+}
+
+bool NETIF_GetConnectionStatus()
+{
+	return has_connection;
+}
+
+char *NETIF_GetSSID()
+{
+	if (wifi_manager_config_sta != NULL)
+	{
+		return (char*)wifi_manager_config_sta->sta.ssid;
+	} else {
+		return NULL;
+	}
 }
 
 int NETIF_ScanNetwork(Netif_scan_result_st *result)

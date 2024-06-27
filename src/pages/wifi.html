@@ -49,6 +49,7 @@
                             <button class="login100-form-btn" onclick="location.href = './home.html';"> Home </button>
                         </div>
                     </div>
+
                     
                     <div class="container" id="form_connect" style="display:none">
                         <h1>Rede</h1>
@@ -81,6 +82,8 @@
                                     <button class="login100-form-btn" onclick="sendNewConfig();"> Conectar </button>
                                 </div>
                             </div>
+
+                            
                             
                             <div class="container-login100-form-btn">
                                 <div class="wrap-login100-form-btn">
@@ -90,11 +93,41 @@
                             </div>
                         </form>
                     </div>
+
+                    <!-- Visualizador de status -->
+                    <div>
+                        <h1>Status</h1>
+                        <div id="status"></div>
+                        <div style="display: flex; align-items: center;"></div>
+                            <label for="ssid_input">SSID:</label>
+                            <input type="text" id="ssid_input" value="0" style="margin-left: 10px;">
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <label for="status_input">Status:</label>
+                            <input type="text" id="status_input" value="0" style="margin-left: 10px;">
+                        </div>
+                    </div></div>
                 </div>
             </div>
         </div>
     </body>
     <script>
+        function makeRequest() {
+            fetch('./wifi_status')
+            .then(response => response.json())
+            .then(data => {
+            console.log(data);
+            document.querySelector("#ssid_input").value = data['ssid'];
+            document.querySelector("#status_input").value = data['status'];
+            // Faça algo com os dados recebidos
+            })
+            .catch(error => {
+            console.error('Erro na requisição:', error);
+            });
+        }
+
+        setInterval(makeRequest, 5000);
+
         function scan_wifi()
         {
             document.querySelector("#ConfigurarManualmenteBtn").style.display = 'none';
