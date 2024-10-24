@@ -33,6 +33,7 @@
 #include "lwip/ip4_addr.h"
 
 #include "LI_Netif_Esp32.h"
+#include "APP_WebServer_Esp32.h"
 
 /* *********************************** *
  *                                     *
@@ -74,7 +75,7 @@ struct wifi_settings_t wifi_settings = {
 	.sta_static_ip = 0,
 };
 
-Netif_Wifi_st fallbackNetwork = {.user = "empty", .pswd = "empty"};
+Netif_Wifi_st fallbackNetwork = {/*.user = "empty", .pswd = "empty"*/};
 const char wifi_manager_nvs_namespace[] = "espwifimgr";
 static EventGroupHandle_t s_wifi_event_group;
 static const char *TAG        = "WIFI_TAG";
@@ -94,8 +95,11 @@ bool has_connection = false;
  *                                     *
  * *********************************** */
 
-void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
-{
+Netif_Wifi_st *external_config = NULL;
+
+void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)(Netif_event_et, Netif_Message_st*))
+{	
+	external_config = config_device;
     config = (Netif_Wifi_st*)malloc(sizeof(Netif_Wifi_st));
     Network_Callback = callback;
     esp_err_t esp_err;
@@ -117,9 +121,9 @@ void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
         memcpy(config->pswd, wifi_manager_config_sta->sta.password, 64);
         
         printf("Credenciais:\n");
-        printf("- User: %s\n", config->user);
-        printf("- PSWD: %s\n", config->pswd);
-        printf("- SSID: %s\n", config->ssid);
+        printf("- User: %.*s\n", sizeof(config->user), config->user);
+        printf("- PSWD: %.*s\n", sizeof(config->pswd), config->pswd);
+        printf("- SSID: %.*s\n", sizeof(config->ssid), config->ssid);
         printf("- Mode: %s\n", config->auth_type == NETWORK_WPA2_PERSONAL ? "WPA2_PERSONAL" : "WPA2_ENTERPRISE");
     }
 
@@ -162,10 +166,22 @@ void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)())
 			.beacon_interval = DEFAULT_AP_BEACON_INTERVAL,
 		},
 	};
-	uint8_t mac[6];
-	esp_efuse_mac_get_default(mac);
-	sprintf((char*)wifi_settings.ap_ssid, "%s_%X%X%X", "LIAP", mac[3], mac[4], mac[5]);
-	memcpy(ap_config.ap.ssid, wifi_settings.ap_ssid, 32);
+
+	memset(ap_config.ap.ssid, '\0', 32);
+
+	if (config->softap_name[0] == 'L' && config->softap_name[1] == 'I' && config->softap_name[2] == 'A' && config->softap_name[3] == 'P')
+	{
+		ESP_LOGI(TAG, "Using softap_name from config %s" , config->softap_name);
+		memcpy(wifi_settings.ap_ssid, config->softap_name, 32);
+		memcpy(ap_config.ap.ssid, ( char*)wifi_settings.ap_ssid, 32);
+	} else {
+
+		uint8_t mac[6];
+		esp_efuse_mac_get_default(mac);
+		sprintf((char*)wifi_settings.ap_ssid, "%s_%X%X%X", "LIAP", mac[3], mac[4], mac[5]);
+		memcpy(ap_config.ap.ssid, ( char*)wifi_settings.ap_ssid, 32);
+		memcpy(config->softap_name, wifi_settings.ap_ssid, 32);
+	}
 
     /* if the password lenght is under 8 char which is the minium for WPA2, the access point starts as open */
 	if (strlen((char *)wifi_settings.ap_pwd) < WPA2_MINIMUM_PASSWORD_LENGTH)
@@ -246,13 +262,13 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
     if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_START) 
     {
         esp_wifi_connect();
-		Network_Callback(NETIF_INTERFACE_STARTED, &network_message);
+		if (Network_Callback != NULL) Network_Callback(NETIF_INTERFACE_STARTED, &network_message);
 		ESP_LOGI(TAG, "wifi_init_sta finished.");
     } 
     else if (event_base == WIFI_EVENT && event_id == WIFI_EVENT_STA_DISCONNECTED) 
     {
 		xEventGroupSetBits(s_wifi_event_group, WIFI_FAIL_BIT);
-		Network_Callback(NETIF_INTERFACE_DISCONNECTED, &network_message);
+		if (Network_Callback != NULL) Network_Callback(NETIF_INTERFACE_DISCONNECTED, &network_message);
         if (s_retry_num < NETWORK_MAXIMUM_CONNECT_RETRY) 
         {
 			wifi_sta_list_t wifi_sta_list;
@@ -261,6 +277,7 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
 			{
 				return;
 			}
+			vTaskDelay(5000 / portTICK_PERIOD_MS);
             esp_wifi_connect();
             s_retry_num++;
 			
@@ -275,14 +292,18 @@ static void NETIF_Callback(void* arg, esp_event_base_t event_base, int32_t event
         ESP_LOGI(TAG, "got ip:" IPSTR, IP2STR(&event->ip_info.ip));
         s_retry_num = 0;
         xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
-		Network_Callback(NETIF_INTERFACE_CONNECTED, &network_message);
+		if (Network_Callback != NULL) Network_Callback(NETIF_INTERFACE_CONNECTED, &network_message);
 		has_connection = true;
     }
 	else if (event_base == IP_EVENT && event_id == IP_EVENT_AP_STAIPASSIGNED)
 	{
 		ip_event_ap_staipassigned_t* event = (ip_event_ap_staipassigned_t*) event_data;
 		ESP_LOGE(TAG, "assigned ip:" IPSTR, IP2STR(&event->ip));
-		Network_Callback(NETIF_INTERFACE_GOT_ACCESSED, &network_message);
+		if (Network_Callback != NULL) Network_Callback(NETIF_INTERFACE_GOT_ACCESSED, &network_message);
+		if (external_config == NULL)
+		{
+			WS_Init(NULL, 0, NULL, 0);
+		}
 	}
 }
 
@@ -308,6 +329,25 @@ static bool wifi_manager_fetch_wifi_sta_config()
 		size_t sz = sizeof(wifi_settings);
 		uint8_t *buff = (uint8_t*)malloc(sizeof(uint8_t) * sz);
 		memset(buff, 0x00, sizeof(sz));
+
+		uint8_t *tmp_sapname = (uint8_t*)malloc(32);
+		sz = WIFI_SOFTAP_NAME_BLOB_SIZE;
+		esp_err = nvs_get_blob(handle, "softapn", tmp_sapname, &sz);
+		if(esp_err != ESP_OK){
+			ESP_LOGE(TAG, "Failed to read softap_name from NVS error: %d", esp_err);
+			ESP_LOGE(TAG, "Setting softap_name to default");
+			uint8_t mac[6];
+			esp_efuse_mac_get_default(mac);
+			sprintf((char*)tmp_sapname, "%s_%X%X%X", "LIAP", mac[3], mac[4], mac[5]);
+			esp_err = nvs_set_blob(handle, "softapn", tmp_sapname, 32);
+			if (esp_err == ESP_OK)
+			{
+				nvs_commit(handle);
+				ESP_LOGI(TAG, "SoftAP name set to default %s", tmp_sapname);
+			}
+		}
+		ESP_LOGI(TAG, "wifi_manager_fetch_wifi_sta_config: SoftAP_ssid:%s",tmp_sapname);
+		memcpy(config->softap_name, tmp_sapname, 32);
 
 		/* ssid */
 		sz = sizeof(wifi_manager_config_sta->sta.ssid);
@@ -393,6 +433,7 @@ static bool wifi_manager_fetch_wifi_sta_config()
 		ESP_LOGD(TAG, "wifi_manager_fetch_wifi_settings: sta_power_save (1 = yes):%i",wifi_settings.sta_power_save);
 		ESP_LOGD(TAG, "wifi_manager_fetch_wifi_settings: sta_static_ip (0 = dhcp client, 1 = static ip):%i",wifi_settings.sta_static_ip);
 
+
 		return wifi_manager_config_sta->sta.ssid[0] != '\0';
 
 
@@ -468,6 +509,7 @@ esp_err_t NETIF_SetConfig(Netif_Wifi_st newConfig)
 	memset(&tmp_settings, 0x00, sizeof(tmp_settings));
 	bool change = false;
 
+	memcpy(config->softap_name, newConfig.softap_name, sizeof(newConfig.softap_name));
     memcpy(wifi_manager_config_sta->sta.ssid, newConfig.ssid, sizeof(newConfig.ssid));
     memcpy(wifi_manager_config_sta->sta.password, newConfig.pswd, sizeof(newConfig.pswd));
 
@@ -475,7 +517,8 @@ esp_err_t NETIF_SetConfig(Netif_Wifi_st newConfig)
 	ESP_LOGI(TAG, "SSID: %s", wifi_manager_config_sta->sta.ssid);
 	ESP_LOGI(TAG, "Password: %s", wifi_manager_config_sta->sta.password);
 	ESP_LOGI(TAG, "mode: %d", newConfig.auth_type);
-	ESP_LOGI(TAG, "user: %s", newConfig.user);
+	ESP_LOGI(TAG, "user: %.*s", sizeof(newConfig.user), newConfig.user);
+	ESP_LOGI(TAG, "softap_name: %s", newConfig.softap_name);
 
 	if (wifi_manager_config_sta && nvs_sync_lock(portMAX_DELAY))
 	{
@@ -487,6 +530,25 @@ esp_err_t NETIF_SetConfig(Netif_Wifi_st newConfig)
 		}
 
 		//Aloco a memória para receber a informação do modo de autenticação
+		uint8_t *tmp_sapname = (uint8_t*)malloc(32);
+		memset(tmp_sapname, 0x00, 32);
+		sz = sizeof(newConfig.softap_name);
+		esp_err = nvs_get_blob(handle, "softap_name", tmp_sapname, &sz);
+		printf("tmp_sapname: %s esp_err: %d\n", (char *)tmp_sapname, esp_err);
+		if ((esp_err == ESP_OK || esp_err == ESP_ERR_NVS_NOT_FOUND) && strcmp((char *)tmp_sapname, newConfig.softap_name) != 0)
+		{
+			printf("Salvando SoftAP Name: %s\n", newConfig.softap_name);
+			esp_err = nvs_set_blob(handle, "softapn", (uint8_t*)newConfig.softap_name, 32);
+			if (esp_err != ESP_OK)
+			{
+				ESP_LOGE(TAG, "Failed to write softap_name to NVS");
+				nvs_sync_unlock();
+				return esp_err;
+			}
+			ESP_LOGI(TAG, "wifi_manager_wrote wifi_settings: SoftAP_ssid:%s", newConfig.softap_name);
+			change = true;
+		}
+
 		uint8_t* tmp_mod = (uint8_t*)malloc(30);
 		memset(tmp_mod,0x00,30);
 		sz = sizeof(newConfig.auth_type_str);
@@ -495,7 +557,7 @@ esp_err_t NETIF_SetConfig(Netif_Wifi_st newConfig)
 		printf("tmp_mod: %s esp_err: %d\n", (char *)tmp_mod, esp_err);
 		if ((esp_err == ESP_OK || esp_err == ESP_ERR_NVS_NOT_FOUND) && strcmp((char *)tmp_mod, newConfig.auth_type_str) != 0)
 		{
-			printf("Salvando Mode: %s\n", newConfig.auth_type_str);
+			printf("Salvando Mode: %.*s\n", sizeof(newConfig.auth_type_str), newConfig.auth_type_str);
 			esp_err = nvs_set_blob(handle, "mode", (uint8_t*)newConfig.auth_type_str, 30);
 			if (esp_err != ESP_OK)
 			{
@@ -614,7 +676,7 @@ esp_err_t NETIF_GetConfig(Netif_Wifi_st *currentConfig)
 	return ESP_OK;
 }
 
-esp_err_t NETIF_TryConnect(Netif_Wifi_st config)
+esp_err_t NETIF_TryConnect(Netif_Wifi_st rcv_config)
 {	
 	esp_err_t esp_err = ESP_OK;
 	ESP_LOGW("TRY","Tentando reconectar na nova rede");
@@ -628,19 +690,20 @@ esp_err_t NETIF_TryConnect(Netif_Wifi_st config)
                         },
             },
     };
-    memcpy(wifi_config_sta.sta.ssid, (uint8_t*)config.ssid, 32);
-    memcpy (wifi_config_sta.sta.password, (uint8_t*)config.pswd, 64);
+	memcpy(config, &rcv_config, sizeof(Netif_Wifi_st));
+    memcpy(wifi_config_sta.sta.ssid, (uint8_t*)rcv_config.ssid, 32);
+    memcpy (wifi_config_sta.sta.password, (uint8_t*)rcv_config.pswd, 64);
 
-	if(config.auth_type == NETWORK_WPA2_ENTERPRISE)
+	if(rcv_config.auth_type == NETWORK_WPA2_ENTERPRISE)
     {
-        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_sta_wpa2_ent_set_identity((uint8_t *)config.user, strlen(config.user)));
-        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_sta_wpa2_ent_set_username((uint8_t *)config.user, strlen(config.user)));
-        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_sta_wpa2_ent_set_password((uint8_t *)config.pswd, strlen((char *)config.pswd)));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_sta_wpa2_ent_set_identity((uint8_t *)rcv_config.user, strlen(rcv_config.user)));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_sta_wpa2_ent_set_username((uint8_t *)rcv_config.user, strlen(rcv_config.user)));
+        ESP_ERROR_CHECK_WITHOUT_ABORT(esp_wifi_sta_wpa2_ent_set_password((uint8_t *)rcv_config.pswd, strlen((char *)rcv_config.pswd)));
         ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_enable());
 
-        printf("user_wpa_enterprise: %s\n", config.user);
-        printf("ssid: %s\n", config.ssid);
-		printf("pswd: %s\n", config.pswd);
+        printf("user_wpa_enterprise: %s\n", rcv_config.user);
+        printf("ssid: %s\n", rcv_config.ssid);
+		printf("pswd: %s\n", rcv_config.pswd);
 
     } else {
 		ESP_ERROR_CHECK(esp_wifi_sta_wpa2_ent_disable());
@@ -674,7 +737,7 @@ void NETIF_SetFallBackNetwork(char *ssid, char* password)
 	strcpy(fallbackNetwork.pswd, password);
 	strcpy(fallbackNetwork.user, "empty");
 	strcpy(fallbackNetwork.auth_type_str, AUTHMODE_WPA2_PERSONAL);
-	fallbackNetwork.auth_type = 0;
+	fallbackNetwork.auth_type = (Netif_Connection_type_et)0;
 }
 
 int NETIF_GetRSSI(void)

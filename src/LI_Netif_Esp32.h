@@ -1,6 +1,10 @@
 #ifndef _LI_WIFI_ESP_
 #define _LI_WIFI_ESP_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "esp_netif.h"
@@ -81,6 +85,7 @@
 
 #define WIFI_MANAGER_NVS_NAMESPACE "espwifimgr"
 #define WIFI_AUTHMODE_BLOB_SIZE 30
+#define WIFI_SOFTAP_NAME_BLOB_SIZE 32
 #define AUTHMODE_WPA2_ENTERPRISE "wpa_enterprise"
 #define AUTHMODE_WPA2_PERSONAL "standard"
 
@@ -131,6 +136,7 @@ typedef struct
     char user[64];
     uint8_t channel;
     page_function pages;
+    char softap_name[32];
 }Netif_Wifi_st;
 
 typedef enum
@@ -161,7 +167,7 @@ typedef struct
  * @param config struct with wifi general config
  * @param callback callback function to receive wifi events
  */
-void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)());
+void NETIF_Init(Netif_Wifi_st *config_device, void (*callback)(Netif_event_et, Netif_Message_st*));
 
 /**
  * @brief deinitialize wifi stack
@@ -233,5 +239,9 @@ int NETIF_GetRSSI();
  * @return esp_err_t 
  */
 esp_err_t NETIF_GetConfig(Netif_Wifi_st *currentConfig);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -43,6 +43,7 @@
 static char default_login[] = "admin";
 static char default_password[] = "password";
 static bool flag_isLogged = false;
+static bool flag_isWebserverRunning = false;
 static char json_pages[1024] = {0};
 
 // uint16_t func_type_cmp(cJSON* func_type);
@@ -167,11 +168,11 @@ esp_err_t set_config_handler(httpd_req_t *req)
         {
             strcpy(config.auth_type_str, AUTHMODE_WPA2_ENTERPRISE);
             strcpy((config.user), user->valuestring);
-            config.auth_type = 1;
+            config.auth_type = (Netif_Connection_type_et)1;
         } else {
             strcpy(config.auth_type_str, AUTHMODE_WPA2_PERSONAL);
             strcpy((config.user), "none");
-            config.auth_type = 0;
+            config.auth_type = (Netif_Connection_type_et)0;
         }
         
         NETIF_TryConnect(config);
@@ -479,10 +480,11 @@ httpd_uri_t urls[] = {
 
 void  WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st *list, int list_len)
 {
+    if (flag_isWebserverRunning) return;
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
-    config.max_uri_handlers = 35;
+    config.max_uri_handlers = 45;
     config.lru_purge_enable = true;
 
     WS_Process_list_pages(list, list_len);
@@ -509,10 +511,12 @@ void  WS_Init(httpd_uri_t *app_urls, int number, WS_Menu_list_st *list, int list
             printf("registering url: %d\n", w);
             httpd_register_uri_handler(server, &(union_urls[w]));
         }
+        flag_isWebserverRunning = true;
         return;//server;
     }
 
     ESP_LOGI(TAG, "Error starting server!");
+    flag_isWebserverRunning = false;
     return;// NULL;
 }
 

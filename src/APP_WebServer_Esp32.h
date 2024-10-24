@@ -1,6 +1,10 @@
 #ifndef _LI_WEBSERVER_ESP_
 #define _LI_WEBSERVER_ESP_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 #include <stdbool.h>
 #include "esp_http_server.h"
@@ -23,5 +27,9 @@ bool WS_IsLogged(void);
 
 bool WS_PostReception(httpd_req_t *req, char *buf, int size_buf);
 void WS_Redirect(httpd_req_t *req, const char *data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*_LI_WEBSERVER_ESP_*/
