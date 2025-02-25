@@ -19,25 +19,19 @@
 */
 #define BLINK_GPIO 21
 
-void app_callback(Network_event_et evt, Network_Message_st* msg)
+void app_callback(Netif_event_et evt, Netif_Message_st* msg)
 {
     switch(evt)
     { 
-        case NETWORK_INTERFACE_SETTED:
+        case NETIF_INTERFACE_STARTED:
         {
-            printf("NETWORK_INTERFACE_SETTED\n");
+            printf("NETIF_INTERFACE_STARTED\n");
         }
         break;
 
         case NETIF_INTERFACE_CONNECTED:
         {
             printf("NETWORK_INTERFACE_CONNECTED\n");
-        }
-        break;
-
-        case NETWORK_INTERFACE_CONNECTION_FAILED:
-        {
-            printf("NETWORK_INTERFACE_CONNECTION_FAILED\n");
         }
         break;
 
@@ -48,66 +42,11 @@ void app_callback(Network_event_et evt, Network_Message_st* msg)
         }
         break;
 
-        case NETWORK_PLATFORM_PROTOCOL_SETTED:
+        case NETIF_INTERFACE_GOT_ACCESSED:
         {
-            printf("NETWORK_PLATFORM_PROTOCOL_SETTED\n");
+            printf("NETWORK_INTERFACE_GOT_ACCESSED\n");
         }
         break;
-
-        case NETWORK_PLATFORM_PROTOCOL_CONNECTED:
-        {
-            printf("NETWORK_PLATFORM_PROTOCOL_CONNECTED\n");
-        }
-        break;
-
-        case NETWORK_PLATFORM_PROTOCOL_MESSAGE_RECEIVED:
-        {
-            printf("NETWORK_PLATFORM_PROTOCOL_MESSAGE_RECEIVED\n");
-        }
-        break;
-
-        case NETWORK_PLATFORM_PROTOCOL_CONNECTION_FAILED:
-        {
-            printf("NETWORK_PLATFORM_PROTOCOL_CONNECTION_FAILED\n");
-        }
-        break;
-
-        case NETWORK_PLATFORM_PROTOCOL_DISCONNECTED:
-        {
-            printf("NETWORK_PLATFORM_PROTOCOL_DISCONNECTED\n");
-        }
-        break;
-
-        case NETWORK_INTERNAL_PROTOCOL_CONNECTED:
-        {
-            printf("NETWORK_INTERNAL_PROTOCOL_CONNECTED\n");
-        }
-        break;
-
-        case NETWORK_INTERNAL_PROTOCOL_MESSAGE_RECEIVED:
-        {
-            printf("NETWORK_INTERNAL_PROTOCOL_MESSAGE_RECEIVED\n");
-        }
-        break;
-
-        case NETWORK_INTERNAL_PROTOCOL_CONNECTION_FAILED:
-        {
-            printf("NETWORK_INTERNAL_PROTOCOL_CONNECTION_FAILED\n");
-        }
-        break;
-
-        case NETWORK_INTERNAL_PROTOCOL_DISCONNECTED:
-        {
-            printf("NETWORK_INTERNAL_PROTOCOL_DISCONNECTED\n");
-        }
-        break;
-
-        case NETWORK_PROCEDURE_FINISHED:
-        {
-            printf("NETWORK_PROCEDURE_FINISHED\n");
-        }
-        break;
-
     }
 }
 
@@ -131,7 +70,7 @@ void app_main(void)
        Technical Reference for a list of pads and their default
        functions.)
     */
-    NETIF_Init(app_callback);
+    NETIF_Init(NULL, app_callback);
 
     httpd_uri_t urls[] = {
         {

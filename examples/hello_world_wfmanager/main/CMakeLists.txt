@@ -1,3 +1,3 @@
 idf_component_register(SRCS "blink.c"
-                    INCLUDE_DIRS "."
-                    REQUIRES "comp_wifimgr")
+                    INCLUDE_DIRS ".")
+                    #REQUIRES "comp_wifimgr")
